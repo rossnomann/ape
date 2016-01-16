@@ -1,0 +1,6 @@
+[package]
+name = "ape"
+version = "0.1.0"
+authors = ["Kilte Leichnam <nwotnbm@gmail.com>"]
+[dependencies]
+byteorder = "0.4"
