@@ -8,6 +8,10 @@ A library for reading and writing [APEv2 tags][1].
 
 ## Changelog
 
+### 0.1.1 (21.01.2016)
+
+- Use `Result<()>` instead of `Option<Error>`.
+
 ### 0.1.0 (16.01.2016)
 
 - First release.
