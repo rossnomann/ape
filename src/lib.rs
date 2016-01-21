@@ -15,10 +15,7 @@
 //! let mut tag = Tag::new();
 //! let item = Item::from_text("artist", "Artist Name").unwrap();
 //! tag.set_item(item);
-//! match tag.write("path/to/file") {
-//!     Some(error) => println!("{:?}", error),
-//!     None => println!("Ok")
-//! };
+//! tag.write("path/to/file").unwrap();
 //! ```
 //!
 //! ## Reading a tag
@@ -41,10 +38,7 @@
 //! let item = Item::from_text("album", "Album Name").unwrap();
 //! tag.set_item(item);
 //! tag.remove_item("cover");
-//! match tag.write(path) {
-//!     Some(error) => println!("{:?}", error),
-//!     None => println!("Ok")
-//! };
+//! tag.write(path).unwrap();
 //! ```
 //!
 //! ## Deleting a tag
@@ -52,10 +46,7 @@
 //! ```no_run
 //! use ape::remove;
 //!
-//! match remove("path/to/file") {
-//!     Some(error) => println!("{:?}", error),
-//!     None => println!("Ok")
-//! };
+//! remove("path/to/file").unwrap();
 //! ```
 //!
 

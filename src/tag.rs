@@ -1,6 +1,5 @@
 extern crate byteorder;
 
-use std::convert;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::fs::{File, OpenOptions};
 use std::path::Path;
@@ -14,15 +13,6 @@ use util::{APE_PREAMBLE, probe_id3v1, probe_lyrics3v2, vec_to_string};
 
 const BUFFER_SIZE: u64 = 65536;
 
-macro_rules! try_opt {
-    ($expr:expr) => (match $expr {
-        Ok(val) => val,
-        Err(err) => {
-            return Some(convert::From::from(err))
-        }
-    })
-}
-
 /// An APE Tag containing APE Tag Items.
 /// # Examples
 ///
@@ -34,10 +24,7 @@ macro_rules! try_opt {
 /// let mut tag = Tag::new();
 /// let item = Item::from_text("artist", "Artist Name").unwrap();
 /// tag.set_item(item);
-/// match tag.write("path/to/file") {
-///     Some(error) => println!("{:?}", error),
-///     None => println!("Ok")
-/// };
+/// tag.write("path/to/file").unwrap();
 /// ```
 /// # Updating a tag
 ///
@@ -49,10 +36,7 @@ macro_rules! try_opt {
 /// let item = Item::from_text("album", "Album Name").unwrap();
 /// tag.set_item(item);
 /// tag.remove_item("cover");
-/// match tag.write(path) {
-///     Some(error) => println!("{:?}", error),
-///     None => println!("Ok")
-/// };
+/// tag.write(path).unwrap();
 /// ```
 #[derive(Debug)]
 pub struct Tag {
@@ -98,41 +82,35 @@ impl Tag {
     /// # Errors
     ///
     /// It is considered an error if there are no items in the tag.
-    pub fn write<P: AsRef<Path>>(&self, path: P) -> Option<Error> {
+    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if self.items.len() == 0 {
-            return Some(Error::EmptyTag);
+            return Err(Error::EmptyTag);
         }
 
+        try!(remove(&path));
 
-        match remove(&path) {
-            Some(err) => {
-                return Some(err);
-            },
-            None => {}
-        };
-
-        let mut file = &try_opt!(OpenOptions::new().read(true).write(true).open(path));
+        let mut file = &try!(OpenOptions::new().read(true).write(true).open(path));
 
         // Keep ID3v1 and LYRICS3v2 (if any)
         let mut id3 = Vec::<u8>::new();
-        let filesize = try_opt!(file.seek(SeekFrom::End(0)));
-        if try_opt!(probe_id3v1(&mut file)) {
+        let filesize = try!(file.seek(SeekFrom::End(0)));
+        if try!(probe_id3v1(&mut file)) {
             let mut end_size: i64 = 128;
-            let lyrcis3v2_size = try_opt!(probe_lyrics3v2(&mut file));
+            let lyrcis3v2_size = try!(probe_lyrics3v2(&mut file));
             if lyrcis3v2_size != -1 {
                 end_size += lyrcis3v2_size;
             }
-            try_opt!(file.seek(SeekFrom::End(-end_size)));
-            try_opt!(file.take(end_size as u64).read_to_end(&mut id3));
-            try_opt!(file.seek(SeekFrom::End(-end_size)));
-            try_opt!(file.set_len(filesize - end_size as u64));
+            try!(file.seek(SeekFrom::End(-end_size)));
+            try!(file.take(end_size as u64).read_to_end(&mut id3));
+            try!(file.seek(SeekFrom::End(-end_size)));
+            try!(file.set_len(filesize - end_size as u64));
         }
-        try_opt!(file.seek(SeekFrom::End(0)));
+        try!(file.seek(SeekFrom::End(0)));
 
         // Convert items to bytes
         let mut items = Vec::<Vec<u8>>::new();
         for item in &self.items {
-            items.push(try_opt!(item.to_vec()));
+            items.push(try!(item.to_vec()));
         }
         // APE tag items should be sorted ascending by size
         items.sort_by(|a, b| a.len().cmp(&b.len()));
@@ -141,26 +119,26 @@ impl Tag {
         // Write items
         for item in items {
             size += item.len();
-            try_opt!(file.write_all(&item));
+            try!(file.write_all(&item));
         }
 
         // Write footer
-        try_opt!(file.write_all(APE_PREAMBLE));
-        try_opt!(file.write_u32::<LittleEndian>(APE_VERSION));
+        try!(file.write_all(APE_PREAMBLE));
+        try!(file.write_u32::<LittleEndian>(APE_VERSION));
         // Tag size including footer
-        try_opt!(file.write_u32::<LittleEndian>(size as u32));
+        try!(file.write_u32::<LittleEndian>(size as u32));
         // Item count
-        try_opt!(file.write_u32::<LittleEndian>(self.items.len() as u32));
+        try!(file.write_u32::<LittleEndian>(self.items.len() as u32));
         // Tag flags
-        try_opt!(file.write_u32::<LittleEndian>(0));
+        try!(file.write_u32::<LittleEndian>(0));
         // Reserved
         for _ in 0..8 {
-            try_opt!(file.write_u8(0));
+            try!(file.write_u8(0));
         }
 
         // Write ID3v1 and LYRICS3v2 (if any)
-        try_opt!(file.write_all(&id3));
-        None
+        try!(file.write_all(&id3));
+        Ok(())
     }
 }
 
@@ -233,22 +211,19 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
 /// ```no_run
 /// use ape::remove;
 ///
-/// match remove("path/to/file") {
-///     Some(error) => println!("{:?}", error),
-///     None => println!("Ok")
-/// };
+/// remove("path/to/file").unwrap();
 /// ```
-pub fn remove<P: AsRef<Path>>(path: P) -> Option<Error> {
-    let mut file = &try_opt!(OpenOptions::new().read(true).write(true).open(path));
+pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
+    let mut file = &try!(OpenOptions::new().read(true).write(true).open(path));
     let meta = match Meta::read(&mut file) {
         Ok(meta) => meta,
         Err(error) => match error {
             Error::TagNotFound => {
                 // It's ok, nothing to remove.
-                return None;
+                return Ok(());
             },
             _ => {
-                return Some(error);
+                return Err(error);
             }
         }
     };
@@ -264,25 +239,25 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Option<Error> {
             size += 32;
         }
     }
-    let filesize = try_opt!(file.seek(SeekFrom::End(0)));
+    let filesize = try!(file.seek(SeekFrom::End(0)));
     let movesize = filesize - offset - size;
     if movesize > 0 {
-        try_opt!(file.flush());
-        try_opt!(file.seek(SeekFrom::Start(offset + size)));
+        try!(file.flush());
+        try!(file.seek(SeekFrom::Start(offset + size)));
         let mut buff = Vec::<u8>::with_capacity(BUFFER_SIZE as usize);
-        try_opt!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
+        try!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
         while buff.len() > 0 {
-            try_opt!(file.seek(SeekFrom::Start(offset)));
-            try_opt!(file.write(&buff));
+            try!(file.seek(SeekFrom::Start(offset)));
+            try!(file.write(&buff));
             offset += buff.len() as u64;
-            try_opt!(file.seek(SeekFrom::Start(offset + size)));
+            try!(file.seek(SeekFrom::Start(offset + size)));
             buff.clear();
-            try_opt!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
+            try!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
         }
     }
-    try_opt!(file.set_len(filesize - size));
-    try_opt!(file.flush());
-    None
+    try!(file.set_len(filesize - size));
+    try!(file.flush());
+    Ok(())
 }
 
 #[cfg(test)]
@@ -317,10 +292,7 @@ mod test {
 
         let mut tag = Tag::new();
         tag.set_item(Item::from_text("key", "value").unwrap());
-        match tag.write(path) {
-            Some(err) => panic!("{:?}", err),
-            None => {}
-        };
+        tag.write(path).unwrap();
 
         let tag = read(path).unwrap();
         assert_eq!(1, tag.items.len());
@@ -329,10 +301,7 @@ mod test {
             _ => panic!("Invalid value")
         });
 
-        match remove(path) {
-            Some(err) => panic!("{:?}", err),
-            None => {}
-        };
+        remove(path).unwrap();
         match read(path) {
             Err(_) => {},
             Ok(_) => panic!("The tag wasn't removed!")
@@ -342,9 +311,9 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "Unable to perform operations on empty tag")]
     fn write_failed_with_empty_tag() {
-        let error = Tag::new().write("data/empty").unwrap();
-        assert_eq!("Unable to perform operations on empty tag", format!("{}", error));
+        Tag::new().write("data/empty").unwrap();
     }
 
     #[test]
@@ -360,8 +329,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
-    fn remove_failed() {
+    fn remove_for_no_tag_is_ok() {
         remove("data/no-tag.apev2").unwrap();
     }
 }
