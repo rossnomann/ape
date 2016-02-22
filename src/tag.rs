@@ -3,13 +3,14 @@ extern crate byteorder;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::fs::{File, OpenOptions};
 use std::path::Path;
+use std::str;
 
 use self::byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use error::{Error, Result};
 use item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
 use meta::{Meta, APE_VERSION};
-use util::{APE_PREAMBLE, probe_id3v1, probe_lyrics3v2, vec_to_string};
+use util::{APE_PREAMBLE, probe_id3v1, probe_lyrics3v2};
 
 const BUFFER_SIZE: u64 = 65536;
 
@@ -55,7 +56,7 @@ impl Tag {
         let key = key.to_string();
         self.items.iter()
                   .position(|item| item.key == key)
-                  .map(|idx| self.items.get(idx).unwrap())
+                  .and_then(|idx| self.items.get(idx))
     }
 
     /// Sets a new item.
@@ -180,12 +181,12 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
         }
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
         try!(file.take(item_size as u64).read_to_end(&mut item_value));
-        let item_key = vec_to_string(&item_key);
+        let item_key = try!(str::from_utf8(&item_key));
         items.push(
             match (item_flags & 6) >> 1 {
                 KIND_BINARY => try!(Item::from_binary(item_key, item_value)),
-                KIND_LOCATOR => try!(Item::from_locator(item_key, vec_to_string(&item_value))),
-                KIND_TEXT => try!(Item::from_text(item_key, vec_to_string(&item_value))),
+                KIND_LOCATOR => try!(Item::from_locator(item_key, try!(str::from_utf8(&item_value)))),
+                KIND_TEXT => try!(Item::from_text(item_key, try!(str::from_utf8(&item_value)))),
                 _ => {
                     return Err(Error::BadItemKind);
                 }

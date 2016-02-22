@@ -1,4 +1,5 @@
 use std::io::{Read, Seek, SeekFrom};
+use std::str;
 
 use error::Result;
 
@@ -13,11 +14,6 @@ pub const ID3V1_OFFSET: i64 = -128;
 /// that give the total number of bytes
 /// in the Lyrics3 v2.00 tag field.
 const LYRICS3V2_SIZE: i64 = 6;
-
-/// Performs Vec to String conversion
-pub fn vec_to_string(vec: &Vec<u8>) -> String {
-    vec.iter().map(|&c| c as char).collect()
-}
 
 /// Checks whether ape tag exists
 pub fn probe_ape<R: Read + Seek>(reader: &mut R, pos: SeekFrom) -> Result<bool> {
@@ -49,7 +45,9 @@ pub fn probe_lyrics3v2<R: Read + Seek>(reader: &mut R) -> Result<i64> {
         let mut buf = Vec::<u8>::with_capacity(LYRICS3V2_SIZE as usize);
         try!(reader.seek(SeekFrom::Current(-LYRICS3V2_SIZE)));
         try!(reader.take(LYRICS3V2_SIZE as u64).read_to_end(&mut buf));
-        Ok(try!(vec_to_string(&buf).parse::<i64>()) + LYRICS3V2_SIZE + capacity as i64)
+        let raw_size = try!(str::from_utf8(&buf));
+        let int_size = try!(raw_size.parse::<i64>());
+        Ok(int_size + LYRICS3V2_SIZE + capacity as i64)
     } else {
         Ok(-1)
     }

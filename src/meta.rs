@@ -33,21 +33,17 @@ pub struct Meta {
 
 impl Meta {
     pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
-        let mut found = try!(probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE)));
-        if !found  {
-            found = try!(probe_ape(reader, SeekFrom::Start(0)));
+        let mut found = try!(probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))) ||
+                        try!(probe_ape(reader, SeekFrom::Start(0)));
+        // When located at the end of an MP3 file, an APE tag should be placed after
+        // the the last frame, just before the ID3v1 tag (if any).
+        if !found && try!(probe_id3v1(reader)) {
+            found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE)));
             if !found {
-                // When located at the end of an MP3 file, an APE tag should be placed after
-                // the the last frame, just before the ID3v1 tag (if any).
-                if try!(probe_id3v1(reader)) {
-                    found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE)));
-                    if !found {
-                        // ID3v1 tag maybe preceded by Lyrics3v2: http://id3.org/Lyrics3v2
-                        let size = try!(probe_lyrics3v2(reader));
-                        if size != -1 {
-                            found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE)));
-                        }
-                    }
+                // ID3v1 tag maybe preceded by Lyrics3v2: http://id3.org/Lyrics3v2
+                let size = try!(probe_lyrics3v2(reader));
+                if size != -1 {
+                    found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE)));
                 }
             }
         }

@@ -50,7 +50,6 @@
 //! ```
 //!
 
-#![crate_name = "ape"]
 #![warn(missing_docs)]
 
 pub use error::{Result, Error};

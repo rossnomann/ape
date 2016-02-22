@@ -5,6 +5,7 @@ use std::fmt;
 use std::io::Error as IoError;
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
+use std::str::Utf8Error;
 
 use self::byteorder::Error as ByteOrderError;
 
@@ -17,6 +18,8 @@ pub enum Error {
     Io(IoError),
     /// An error when parsing data to bytes. Contains `byteorder::Error`.
     ByteOrder(ByteOrderError),
+    /// An error when attempting to interpret a sequence of u8 as a string.
+    FromUtf8(Utf8Error),
     /// An error when parsing an integer. Contains `std::num::ParseIntError`.
     ParseInt(ParseIntError),
     /// Unexpected item kind given while parsing a tag.
@@ -40,9 +43,10 @@ pub enum Error {
 impl StdError for Error {
     fn description(&self) -> &str {
         match *self {
-            Error::Io(ref err) => StdError::description(err),
-            Error::ByteOrder(ref err) => StdError::description(err),
-            Error::ParseInt(ref err) => StdError::description(err),
+            Error::Io(ref err) => err.description(),
+            Error::ByteOrder(ref err) => err.description(),
+            Error::ParseInt(ref err) => err.description(),
+            Error::FromUtf8(ref err) => err.description(),
             Error::BadItemKind => "Unexpected item kind",
             Error::BadTagSize => "APE header contains invalid tag size",
             Error::EmptyTag => "Unable to perform operations on empty tag",
@@ -86,4 +90,8 @@ impl From<IoError> for Error {
 
 impl From<ParseIntError> for Error {
     fn from(error: ParseIntError) -> Error { Error::ParseInt(error) }
+}
+
+impl From<Utf8Error> for Error {
+    fn from(error: Utf8Error) -> Error { Error::FromUtf8(error) }
 }
