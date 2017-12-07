@@ -1,8 +1,6 @@
-extern crate byteorder;
-
 use std::io::{Read, Seek, SeekFrom};
 
-use self::byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
 
 use error::{Error, Result};
 use util::{probe_ape, probe_id3v1, probe_lyrics3v2, ID3V1_OFFSET};
@@ -84,9 +82,8 @@ impl Meta {
 
 #[cfg(test)]
 mod test {
-    extern crate byteorder;
     use std::io::{Cursor, Write};
-    use self::byteorder::{LittleEndian, WriteBytesExt};
+    use byteorder::{LittleEndian, WriteBytesExt};
     use super::{Meta, HAS_HEADER, IS_HEADER, HAS_NO_FOOTER};
 
     #[test]

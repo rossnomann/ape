@@ -52,6 +52,8 @@
 
 #![warn(missing_docs)]
 
+extern crate byteorder;
+
 pub use error::{Result, Error};
 pub use item::{Item, ItemValue};
 pub use tag::{Tag, read, remove};

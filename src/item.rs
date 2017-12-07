@@ -1,9 +1,7 @@
-extern crate byteorder;
-
 use std::ascii::{AsciiExt};
 use std::io::{Cursor, Write};
 
-use self::byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt};
 
 use error::{Error, Result};
 

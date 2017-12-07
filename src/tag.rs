@@ -1,11 +1,9 @@
-extern crate byteorder;
-
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::str;
 
-use self::byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use error::{Error, Result};
 use item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
