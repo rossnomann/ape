@@ -1,13 +1,9 @@
-extern crate byteorder;
-
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
 use std::str::Utf8Error;
-
-use self::byteorder::Error as ByteOrderError;
 
 /// A specialized Result type for metadata operations.
 pub type Result<T> = StdResult<T, Error>;
@@ -16,8 +12,6 @@ pub type Result<T> = StdResult<T, Error>;
 pub enum Error {
     /// An IO error occured. Contains `std::io::Error`.
     Io(IoError),
-    /// An error when parsing data to bytes. Contains `byteorder::Error`.
-    ByteOrder(ByteOrderError),
     /// An error when attempting to interpret a sequence of u8 as a string.
     FromUtf8(Utf8Error),
     /// An error when parsing an integer. Contains `std::num::ParseIntError`.
@@ -44,7 +38,6 @@ impl StdError for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Io(ref err) => err.description(),
-            Error::ByteOrder(ref err) => err.description(),
             Error::ParseInt(ref err) => err.description(),
             Error::FromUtf8(ref err) => err.description(),
             Error::BadItemKind => "Unexpected item kind",
@@ -61,7 +54,6 @@ impl StdError for Error {
     fn cause(&self) -> Option<&StdError> {
         match *self {
             Error::Io(ref err) => Some(err),
-            Error::ByteOrder(ref err) => Some(err),
             Error::ParseInt(ref err) => Some(err),
             _ => None
         }
@@ -78,10 +70,6 @@ impl fmt::Display for Error {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         write!(out, "{}", self.description())
     }
-}
-
-impl From<ByteOrderError> for Error {
-    fn from(error: ByteOrderError) -> Error { Error::ByteOrder(error) }
 }
 
 impl From<IoError> for Error {
