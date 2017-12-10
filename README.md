@@ -8,6 +8,10 @@ A library for reading and writing [APEv2 tags][1].
 
 ## Changelog
 
+### 0.2.0 (10.12.2017)
+
+- Use byteorder 1.0.0.
+
 ### 0.1.2 (18.05.2016)
 
 - Small internal improvements.
