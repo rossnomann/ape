@@ -1,4 +1,3 @@
-use std::ascii::{AsciiExt};
 use std::io::{Cursor, Write};
 
 use byteorder::{LittleEndian, WriteBytesExt};
