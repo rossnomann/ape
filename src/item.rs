@@ -51,10 +51,10 @@ impl Item {
         if len < 2 || len > 255 {
             return Err(Error::InvalidItemKeyLen);
         }
-        if DENIED_KEYS.iter().any(|&dk| dk == key) {
+        if DENIED_KEYS.contains(&key.as_str()) {
             return Err(Error::ItemKeyDenied);
         }
-        if !key.chars().all(|c| c.is_ascii()) {
+        if key.chars().any(|c| !c.is_ascii()) {
             return Err(Error::InvalidItemKeyValue);
         }
         Ok(Item {
