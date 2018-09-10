@@ -28,20 +28,25 @@ pub struct Meta {
     pub end_pos: u64,
 }
 
-
 impl Meta {
     pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
-        let mut found = try!(probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))) ||
-                        try!(probe_ape(reader, SeekFrom::Start(0)));
+        let mut found = try!(probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE)))
+            || try!(probe_ape(reader, SeekFrom::Start(0)));
         // When located at the end of an MP3 file, an APE tag should be placed after
         // the the last frame, just before the ID3v1 tag (if any).
         if !found && try!(probe_id3v1(reader)) {
-            found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE)));
+            found = try!(probe_ape(
+                reader,
+                SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE)
+            ));
             if !found {
                 // ID3v1 tag maybe preceded by Lyrics3v2: http://id3.org/Lyrics3v2
                 let size = try!(probe_lyrics3v2(reader));
                 if size != -1 {
-                    found = try!(probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE)));
+                    found = try!(probe_ape(
+                        reader,
+                        SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE)
+                    ));
                 }
             }
         }
@@ -57,7 +62,7 @@ impl Meta {
         // The following 8 bytes are reserved
         let end_pos = try!(reader.seek(SeekFrom::Current(8)));
         let is_header = flags & IS_HEADER != 0;
-        Ok(Meta{
+        Ok(Meta {
             size: size,
             item_count: item_count,
             is_header: is_header,
@@ -82,9 +87,9 @@ impl Meta {
 
 #[cfg(test)]
 mod test {
-    use std::io::{Cursor, Write};
+    use super::{Meta, HAS_HEADER, HAS_NO_FOOTER, IS_HEADER};
     use byteorder::{LittleEndian, WriteBytesExt};
-    use super::{Meta, HAS_HEADER, IS_HEADER, HAS_NO_FOOTER};
+    use std::io::{Cursor, Write};
 
     #[test]
     fn found_at_end() {

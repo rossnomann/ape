@@ -1,5 +1,5 @@
-use std::io::{Read, Seek, SeekFrom, Write};
 use std::fs::{File, OpenOptions};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::str;
 
@@ -8,7 +8,7 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use error::{Error, Result};
 use item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
 use meta::{Meta, APE_VERSION};
-use util::{APE_PREAMBLE, probe_id3v1, probe_lyrics3v2};
+use util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE};
 
 const BUFFER_SIZE: u64 = 65536;
 
@@ -52,9 +52,10 @@ impl Tag {
     /// Returns an item by key.
     pub fn item(&self, key: &str) -> Option<&Item> {
         let key = key.to_string();
-        self.items.iter()
-                  .position(|item| item.key == key)
-                  .and_then(|idx| self.items.get(idx))
+        self.items
+            .iter()
+            .position(|item| item.key == key)
+            .and_then(|idx| self.items.get(idx))
     }
 
     /// Sets a new item.
@@ -70,10 +71,11 @@ impl Tag {
     /// Returns true, if item was removed, and false otherwise.
     pub fn remove_item(&mut self, key: &str) -> bool {
         let key = key.to_string();
-        self.items.iter()
-                  .position(|item| item.key == key)
-                  .map(|idx| self.items.remove(idx))
-                  .is_some()
+        self.items
+            .iter()
+            .position(|item| item.key == key)
+            .map(|idx| self.items.remove(idx))
+            .is_some()
     }
 
     /// Attempts to write the APE Tag to the file at the specified path.
@@ -141,7 +143,6 @@ impl Tag {
     }
 }
 
-
 /// Attempts to read APE tag from the file at the specified path.
 ///
 /// # Errors
@@ -180,21 +181,22 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
         try!(file.take(item_size as u64).read_to_end(&mut item_value));
         let item_key = try!(str::from_utf8(&item_key));
-        items.push(
-            match (item_flags & 6) >> 1 {
-                KIND_BINARY => try!(Item::from_binary(item_key, item_value)),
-                KIND_LOCATOR => try!(Item::from_locator(item_key, try!(str::from_utf8(&item_value)))),
-                KIND_TEXT => try!(Item::from_text(item_key, try!(str::from_utf8(&item_value)))),
-                _ => {
-                    return Err(Error::BadItemKind);
-                }
+        items.push(match (item_flags & 6) >> 1 {
+            KIND_BINARY => try!(Item::from_binary(item_key, item_value)),
+            KIND_LOCATOR => try!(Item::from_locator(
+                item_key,
+                try!(str::from_utf8(&item_value))
+            )),
+            KIND_TEXT => try!(Item::from_text(item_key, try!(str::from_utf8(&item_value)))),
+            _ => {
+                return Err(Error::BadItemKind);
             }
-        );
+        });
     }
     if try!(file.seek(SeekFrom::Current(0))) != meta.end_pos {
         Err(Error::BadTagSize)
     } else {
-        Ok(Tag{items: items})
+        Ok(Tag { items: items })
     }
 }
 
@@ -220,11 +222,11 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
             Error::TagNotFound => {
                 // It's ok, nothing to remove.
                 return Ok(());
-            },
+            }
             _ => {
                 return Err(error);
             }
-        }
+        },
     };
     let mut size = meta.size as u64;
     let mut offset;
@@ -261,10 +263,10 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
 
 #[cfg(test)]
 mod test {
-    use std::fs::{File, remove_file};
-    use std::io::Write;
+    use super::{read, remove, Tag};
     use item::{Item, ItemValue};
-    use super::{Tag, read, remove};
+    use std::fs::{remove_file, File};
+    use std::io::Write;
 
     #[test]
     fn items() {
@@ -273,10 +275,13 @@ mod test {
         assert_eq!(0, tag.items.len());
         tag.set_item(item);
         assert_eq!(1, tag.items.len());
-        assert_eq!("value", match tag.item("key").unwrap().value {
-            ItemValue::Text(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            "value",
+            match tag.item("key").unwrap().value {
+                ItemValue::Text(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
         assert!(tag.remove_item("key"));
         assert_eq!(0, tag.items.len());
         assert!(!tag.remove_item("key"));
@@ -295,15 +300,18 @@ mod test {
 
         let tag = read(path).unwrap();
         assert_eq!(1, tag.items.len());
-        assert_eq!("value", match tag.item("key").unwrap().value {
-            ItemValue::Text(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            "value",
+            match tag.item("key").unwrap().value {
+                ItemValue::Text(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
 
         remove(path).unwrap();
         match read(path) {
-            Err(_) => {},
-            Ok(_) => panic!("The tag wasn't removed!")
+            Err(_) => {}
+            Ok(_) => panic!("The tag wasn't removed!"),
         };
 
         remove_file(path).unwrap();

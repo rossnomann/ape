@@ -8,7 +8,7 @@ pub const KIND_BINARY: u32 = 1;
 pub const KIND_LOCATOR: u32 = 2;
 pub const KIND_TEXT: u32 = 0;
 
-const DENIED_KEYS: [&'static str; 4] =  ["ID3", "TAG", "OggS", "MP+"];
+const DENIED_KEYS: [&'static str; 4] = ["ID3", "TAG", "OggS", "MP+"];
 
 /// Represents an [APE Item Value][1]
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Item_Value
@@ -57,7 +57,10 @@ impl Item {
         if !key.chars().all(|c| c.is_ascii()) {
             return Err(Error::InvalidItemKeyValue);
         }
-        Ok(Item { key: key, value: value })
+        Ok(Item {
+            key: key,
+            value: value,
+        })
     }
 
     /// Creates an item with Binary value.
@@ -101,12 +104,12 @@ impl Item {
                 size = val.len() as u32;
                 flags = KIND_BINARY << 1;
                 value = val;
-            },
+            }
             ItemValue::Locator(ref val) => {
                 size = val.len() as u32;
                 flags = KIND_LOCATOR << 1;
                 value = val.as_ref();
-            },
+            }
             ItemValue::Text(ref val) => {
                 size = val.len() as u32;
                 flags = KIND_TEXT << 1;
@@ -125,9 +128,9 @@ impl Item {
 #[cfg(test)]
 mod test {
     extern crate byteorder;
-    use std::io::{Cursor, Read};
     use self::byteorder::{LittleEndian, ReadBytesExt};
-    use super::{Item, ItemValue, KIND_BINARY, KIND_LOCATOR, KIND_TEXT, DENIED_KEYS};
+    use super::{Item, ItemValue, DENIED_KEYS, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
+    use std::io::{Cursor, Read};
 
     #[test]
     #[should_panic(expected = "Item keys can have a length of 2 up to 255 characters")]
@@ -142,11 +145,12 @@ mod test {
             match Item::from_text(key.to_string(), "val".to_string()) {
                 Err(err) => {
                     assert_eq!(msg, format!("{}", err));
-                },
-                Ok(_) => {panic!("Unexpected item");}
+                }
+                Ok(_) => {
+                    panic!("Unexpected item");
+                }
             };
         }
-
     }
 
     #[test]
@@ -157,19 +161,25 @@ mod test {
 
     #[test]
     fn binary() {
-        let vec: Vec<u8> = vec!(1);
+        let vec: Vec<u8> = vec![1];
         let mut item = Item::from_binary("key", vec).unwrap();
         assert_eq!("key", item.key);
-        assert_eq!(1, match item.value {
-            ItemValue::Binary(ref val) => val,
-            _ => panic!("Invalid value")
-        }[0]);
-        let vec: Vec<u8> = vec!(0);
+        assert_eq!(
+            1,
+            match item.value {
+                ItemValue::Binary(ref val) => val,
+                _ => panic!("Invalid value"),
+            }[0]
+        );
+        let vec: Vec<u8> = vec![0];
         item.set_binary(vec);
-        assert_eq!(0, match item.value {
-            ItemValue::Binary(ref val) => val,
-            _ => panic!("Invalid value")
-        }[0]);
+        assert_eq!(
+            0,
+            match item.value {
+                ItemValue::Binary(ref val) => val,
+                _ => panic!("Invalid value"),
+            }[0]
+        );
     }
 
     #[test]
@@ -177,16 +187,22 @@ mod test {
         let locator = "http://hostname.com";
         let mut item = Item::from_locator("key", locator).unwrap();
         assert_eq!("key", item.key);
-        assert_eq!(locator, match item.value {
-            ItemValue::Locator(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            locator,
+            match item.value {
+                ItemValue::Locator(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
         let locator = "http://another-hostname.com";
         item.set_locator(locator);
-        assert_eq!(locator, match item.value {
-            ItemValue::Locator(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            locator,
+            match item.value {
+                ItemValue::Locator(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
     }
 
     #[test]
@@ -194,21 +210,32 @@ mod test {
         let text = "text";
         let mut item = Item::from_text("key", text).unwrap();
         assert_eq!("key", item.key);
-        assert_eq!(text, match item.value {
-            ItemValue::Text(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            text,
+            match item.value {
+                ItemValue::Text(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
         let text = "another-text";
         item.set_text(text);
-        assert_eq!(text, match item.value {
-            ItemValue::Text(ref val) => val,
-            _ => panic!("Invalid value")
-        });
+        assert_eq!(
+            text,
+            match item.value {
+                ItemValue::Text(ref val) => val,
+                _ => panic!("Invalid value"),
+            }
+        );
     }
 
     #[test]
     fn to_vec() {
-        let mut data = Cursor::new(Item::from_binary("cover", vec!(1, 2, 3)).unwrap().to_vec().unwrap());
+        let mut data = Cursor::new(
+            Item::from_binary("cover", vec![1, 2, 3])
+                .unwrap()
+                .to_vec()
+                .unwrap(),
+        );
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(3, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();
@@ -219,18 +246,33 @@ mod test {
             item_key.push(k);
             k = data.read_u8().unwrap();
         }
-        assert_eq!("cover", item_key.iter().map(|&c| c as char).collect::<String>());
+        assert_eq!(
+            "cover",
+            item_key.iter().map(|&c| c as char).collect::<String>()
+        );
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
-        data.take(item_size as u64).read_to_end(&mut item_value).unwrap();
-        assert_eq!(vec!(1, 2, 3), item_value);
+        data.take(item_size as u64)
+            .read_to_end(&mut item_value)
+            .unwrap();
+        assert_eq!(vec![1, 2, 3], item_value);
 
-        let mut data = Cursor::new(Item::from_text("artist", "Artist").unwrap().to_vec().unwrap());
+        let mut data = Cursor::new(
+            Item::from_text("artist", "Artist")
+                .unwrap()
+                .to_vec()
+                .unwrap(),
+        );
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(6, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(KIND_TEXT, (item_flags & 6) >> 1);
 
-        let mut data = Cursor::new(Item::from_locator("url", "http://test.com").unwrap().to_vec().unwrap());
+        let mut data = Cursor::new(
+            Item::from_locator("url", "http://test.com")
+                .unwrap()
+                .to_vec()
+                .unwrap(),
+        );
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(15, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();

@@ -55,7 +55,7 @@ impl StdError for Error {
         match *self {
             Error::Io(ref err) => Some(err),
             Error::ParseInt(ref err) => Some(err),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -73,13 +73,19 @@ impl fmt::Display for Error {
 }
 
 impl From<IoError> for Error {
-    fn from(error: IoError) -> Error { Error::Io(error) }
+    fn from(error: IoError) -> Error {
+        Error::Io(error)
+    }
 }
 
 impl From<ParseIntError> for Error {
-    fn from(error: ParseIntError) -> Error { Error::ParseInt(error) }
+    fn from(error: ParseIntError) -> Error {
+        Error::ParseInt(error)
+    }
 }
 
 impl From<Utf8Error> for Error {
-    fn from(error: Utf8Error) -> Error { Error::FromUtf8(error) }
+    fn from(error: Utf8Error) -> Error {
+        Error::FromUtf8(error)
+    }
 }

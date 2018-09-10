@@ -54,9 +54,9 @@
 
 extern crate byteorder;
 
-pub use error::{Result, Error};
+pub use error::{Error, Result};
 pub use item::{Item, ItemValue};
-pub use tag::{Tag, read, remove};
+pub use tag::{read, remove, Tag};
 
 mod error;
 mod item;
