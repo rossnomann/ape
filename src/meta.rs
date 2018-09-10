@@ -30,37 +30,32 @@ pub struct Meta {
 
 impl Meta {
     pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
-        let mut found = try!(probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE)))
-            || try!(probe_ape(reader, SeekFrom::Start(0)));
+        let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))?
+            || probe_ape(reader, SeekFrom::Start(0))?;
         // When located at the end of an MP3 file, an APE tag should be placed after
         // the the last frame, just before the ID3v1 tag (if any).
-        if !found && try!(probe_id3v1(reader)) {
-            found = try!(probe_ape(
-                reader,
-                SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE)
-            ));
+        if !found && probe_id3v1(reader)? {
+            found = probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE))?;
             if !found {
                 // ID3v1 tag maybe preceded by Lyrics3v2: http://id3.org/Lyrics3v2
-                let size = try!(probe_lyrics3v2(reader));
+                let size = probe_lyrics3v2(reader)?;
                 if size != -1 {
-                    found = try!(probe_ape(
-                        reader,
-                        SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE)
-                    ));
+                    found =
+                        probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE))?;
                 }
             }
         }
         if !found {
             return Err(Error::TagNotFound);
         }
-        if try!(reader.read_u32::<LittleEndian>()) != APE_VERSION {
+        if reader.read_u32::<LittleEndian>()? != APE_VERSION {
             return Err(Error::InvalidApeVersion);
         }
-        let size = try!(reader.read_u32::<LittleEndian>());
-        let item_count = try!(reader.read_u32::<LittleEndian>());
-        let flags = try!(reader.read_u32::<LittleEndian>());
+        let size = reader.read_u32::<LittleEndian>()?;
+        let item_count = reader.read_u32::<LittleEndian>()?;
+        let flags = reader.read_u32::<LittleEndian>()?;
         // The following 8 bytes are reserved
-        let end_pos = try!(reader.seek(SeekFrom::Current(8)));
+        let end_pos = reader.seek(SeekFrom::Current(8))?;
         let is_header = flags & IS_HEADER != 0;
         Ok(Meta {
             size: size,

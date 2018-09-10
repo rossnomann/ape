@@ -116,11 +116,11 @@ impl Item {
                 value = val.as_ref();
             }
         };
-        try!(cursor.write_u32::<LittleEndian>(size));
-        try!(cursor.write_u32::<LittleEndian>(flags));
-        try!(cursor.write_all(self.key.as_ref()));
-        try!(cursor.write_u8(0));
-        try!(cursor.write_all(value));
+        cursor.write_u32::<LittleEndian>(size)?;
+        cursor.write_u32::<LittleEndian>(flags)?;
+        cursor.write_all(self.key.as_ref())?;
+        cursor.write_u8(0)?;
+        cursor.write_all(value)?;
         Ok(cursor.into_inner())
     }
 }

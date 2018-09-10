@@ -88,30 +88,30 @@ impl Tag {
             return Err(Error::EmptyTag);
         }
 
-        try!(remove(&path));
+        remove(&path)?;
 
-        let mut file = &try!(OpenOptions::new().read(true).write(true).open(path));
+        let mut file = &OpenOptions::new().read(true).write(true).open(path)?;
 
         // Keep ID3v1 and LYRICS3v2 (if any)
         let mut id3 = Vec::<u8>::new();
-        let filesize = try!(file.seek(SeekFrom::End(0)));
-        if try!(probe_id3v1(&mut file)) {
+        let filesize = file.seek(SeekFrom::End(0))?;
+        if probe_id3v1(&mut file)? {
             let mut end_size: i64 = 128;
-            let lyrcis3v2_size = try!(probe_lyrics3v2(&mut file));
+            let lyrcis3v2_size = probe_lyrics3v2(&mut file)?;
             if lyrcis3v2_size != -1 {
                 end_size += lyrcis3v2_size;
             }
-            try!(file.seek(SeekFrom::End(-end_size)));
-            try!(file.take(end_size as u64).read_to_end(&mut id3));
-            try!(file.seek(SeekFrom::End(-end_size)));
-            try!(file.set_len(filesize - end_size as u64));
+            file.seek(SeekFrom::End(-end_size))?;
+            file.take(end_size as u64).read_to_end(&mut id3)?;
+            file.seek(SeekFrom::End(-end_size))?;
+            file.set_len(filesize - end_size as u64)?;
         }
-        try!(file.seek(SeekFrom::End(0)));
+        file.seek(SeekFrom::End(0))?;
 
         // Convert items to bytes
         let mut items = Vec::<Vec<u8>>::new();
         for item in &self.items {
-            items.push(try!(item.to_vec()));
+            items.push(item.to_vec()?);
         }
         // APE tag items should be sorted ascending by size
         items.sort_by(|a, b| a.len().cmp(&b.len()));
@@ -120,25 +120,25 @@ impl Tag {
         // Write items
         for item in items {
             size += item.len();
-            try!(file.write_all(&item));
+            file.write_all(&item)?;
         }
 
         // Write footer
-        try!(file.write_all(APE_PREAMBLE));
-        try!(file.write_u32::<LittleEndian>(APE_VERSION));
+        file.write_all(APE_PREAMBLE)?;
+        file.write_u32::<LittleEndian>(APE_VERSION)?;
         // Tag size including footer
-        try!(file.write_u32::<LittleEndian>(size as u32));
+        file.write_u32::<LittleEndian>(size as u32)?;
         // Item count
-        try!(file.write_u32::<LittleEndian>(self.items.len() as u32));
+        file.write_u32::<LittleEndian>(self.items.len() as u32)?;
         // Tag flags
-        try!(file.write_u32::<LittleEndian>(0));
+        file.write_u32::<LittleEndian>(0)?;
         // Reserved
         for _ in 0..8 {
-            try!(file.write_u8(0));
+            file.write_u8(0)?;
         }
 
         // Write ID3v1 and LYRICS3v2 (if any)
-        try!(file.write_all(&id3));
+        file.write_all(&id3)?;
         Ok(())
     }
 }
@@ -165,35 +165,32 @@ impl Tag {
 /// println!("{:?}", item.value);
 /// ```
 pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
-    let mut file = &try!(File::open(path));
-    let meta = try!(Meta::read(&mut file));
+    let mut file = &File::open(path)?;
+    let meta = Meta::read(&mut file)?;
     let mut items = Vec::<Item>::new();
-    try!(file.seek(SeekFrom::Start(meta.start_pos)));
+    file.seek(SeekFrom::Start(meta.start_pos))?;
     for _ in 0..meta.item_count {
-        let item_size = try!(file.read_u32::<LittleEndian>());
-        let item_flags = try!(file.read_u32::<LittleEndian>());
+        let item_size = file.read_u32::<LittleEndian>()?;
+        let item_flags = file.read_u32::<LittleEndian>()?;
         let mut item_key = Vec::<u8>::new();
-        let mut k = try!(file.read_u8());
+        let mut k = file.read_u8()?;
         while k != 0 {
             item_key.push(k);
-            k = try!(file.read_u8());
+            k = file.read_u8()?;
         }
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
-        try!(file.take(item_size as u64).read_to_end(&mut item_value));
-        let item_key = try!(str::from_utf8(&item_key));
+        file.take(item_size as u64).read_to_end(&mut item_value)?;
+        let item_key = str::from_utf8(&item_key)?;
         items.push(match (item_flags & 6) >> 1 {
-            KIND_BINARY => try!(Item::from_binary(item_key, item_value)),
-            KIND_LOCATOR => try!(Item::from_locator(
-                item_key,
-                try!(str::from_utf8(&item_value))
-            )),
-            KIND_TEXT => try!(Item::from_text(item_key, try!(str::from_utf8(&item_value)))),
+            KIND_BINARY => Item::from_binary(item_key, item_value)?,
+            KIND_LOCATOR => Item::from_locator(item_key, str::from_utf8(&item_value)?)?,
+            KIND_TEXT => Item::from_text(item_key, str::from_utf8(&item_value)?)?,
             _ => {
                 return Err(Error::BadItemKind);
             }
         });
     }
-    if try!(file.seek(SeekFrom::Current(0))) != meta.end_pos {
+    if file.seek(SeekFrom::Current(0))? != meta.end_pos {
         Err(Error::BadTagSize)
     } else {
         Ok(Tag { items: items })
@@ -215,7 +212,7 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
 /// remove("path/to/file").unwrap();
 /// ```
 pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
-    let mut file = &try!(OpenOptions::new().read(true).write(true).open(path));
+    let mut file = &OpenOptions::new().read(true).write(true).open(path)?;
     let meta = match Meta::read(&mut file) {
         Ok(meta) => meta,
         Err(error) => match error {
@@ -240,24 +237,24 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
             size += 32;
         }
     }
-    let filesize = try!(file.seek(SeekFrom::End(0)));
+    let filesize = file.seek(SeekFrom::End(0))?;
     let movesize = filesize - offset - size;
     if movesize > 0 {
-        try!(file.flush());
-        try!(file.seek(SeekFrom::Start(offset + size)));
+        file.flush()?;
+        file.seek(SeekFrom::Start(offset + size))?;
         let mut buff = Vec::<u8>::with_capacity(BUFFER_SIZE as usize);
-        try!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
+        file.take(BUFFER_SIZE).read_to_end(&mut buff)?;
         while buff.len() > 0 {
-            try!(file.seek(SeekFrom::Start(offset)));
-            try!(file.write(&buff));
+            file.seek(SeekFrom::Start(offset))?;
+            file.write(&buff)?;
             offset += buff.len() as u64;
-            try!(file.seek(SeekFrom::Start(offset + size)));
+            file.seek(SeekFrom::Start(offset + size))?;
             buff.clear();
-            try!(file.take(BUFFER_SIZE).read_to_end(&mut buff));
+            file.take(BUFFER_SIZE).read_to_end(&mut buff)?;
         }
     }
-    try!(file.set_len(filesize - size));
-    try!(file.flush());
+    file.set_len(filesize - size)?;
+    file.flush()?;
     Ok(())
 }
 
