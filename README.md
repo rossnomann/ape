@@ -7,10 +7,6 @@ A library for reading and writing [APEv2 tags][1].
 [![Documentation](https://img.shields.io/badge/docs-rs-yellowgreen.svg?style=flat-square)](https://docs.rs/ape)
 
 
-## Maintainers Wanted
-
-Send me an E-Mail (nwotnbm at gmail dot com)
-
 ## Changelog
 
 ### 0.2.0 (10.12.2017)
