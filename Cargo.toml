@@ -15,4 +15,4 @@ license = "MIT"
 exclude = ["data/*"]
 
 [dependencies]
-byteorder = "1.0.0"
+byteorder = "1.2.6"
