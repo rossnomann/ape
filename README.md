@@ -2,7 +2,7 @@
 
 A library for reading and writing [APEv2 tags][1].
 
-[![Build Status](https://img.shields.io/travis/Kilte/rust-ape.svg?style=flat-square)](https://travis-ci.org/Kilte/rust-ape)
+[![Build Status](https://img.shields.io/travis/rossnomann/rust-ape.svg?style=flat-square)](https://travis-ci.org/rossnomann/rust-ape)
 [![Downloads](https://img.shields.io/crates/d/ape.svg?style=flat-square)](https://crates.io/crates/ape/)
 [![Documentation](https://img.shields.io/badge/docs-rs-yellowgreen.svg?style=flat-square)](https://docs.rs/ape)
 
