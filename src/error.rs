@@ -9,6 +9,7 @@ use std::str::Utf8Error;
 pub type Result<T> = StdResult<T, Error>;
 
 /// Describes all errors that may occur.
+#[derive(Debug)]
 pub enum Error {
     /// An IO error occured. Contains `std::io::Error`.
     Io(IoError),
@@ -41,12 +42,6 @@ impl StdError for Error {
             Error::ParseInt(ref err) => Some(err),
             _ => None,
         }
-    }
-}
-
-impl fmt::Debug for Error {
-    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        write!(out, "{}", self.description())
     }
 }
 
