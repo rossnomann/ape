@@ -37,7 +37,7 @@ const BUFFER_SIZE: u64 = 65536;
 /// tag.remove_item("cover");
 /// tag.write(path).unwrap();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Tag {
     /// A vector of items included in the tag.
     pub items: Vec<Item>,
@@ -46,7 +46,7 @@ pub struct Tag {
 impl Tag {
     /// Creates a new empty tag.
     pub fn new() -> Tag {
-        Tag { items: Vec::new() }
+        Self::default()
     }
 
     /// Returns an item by key.
@@ -84,7 +84,7 @@ impl Tag {
     ///
     /// It is considered an error if there are no items in the tag.
     pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if self.items.len() == 0 {
+        if self.items.is_empty() {
             return Err(Error::EmptyTag);
         }
 
@@ -193,7 +193,7 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
     if file.seek(SeekFrom::Current(0))? != meta.end_pos {
         Err(Error::BadTagSize)
     } else {
-        Ok(Tag { items: items })
+        Ok(Tag { items })
     }
 }
 
@@ -244,9 +244,9 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
         file.seek(SeekFrom::Start(offset + size))?;
         let mut buff = Vec::<u8>::with_capacity(BUFFER_SIZE as usize);
         file.take(BUFFER_SIZE).read_to_end(&mut buff)?;
-        while buff.len() > 0 {
+        while !buff.is_empty() {
             file.seek(SeekFrom::Start(offset))?;
-            file.write(&buff)?;
+            file.write_all(&buff)?;
             offset += buff.len() as u64;
             file.seek(SeekFrom::Start(offset + size))?;
             buff.clear();

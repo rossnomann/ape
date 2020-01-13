@@ -58,9 +58,9 @@ impl Meta {
         let end_pos = reader.seek(SeekFrom::Current(8))?;
         let is_header = flags & IS_HEADER != 0;
         Ok(Meta {
-            size: size,
-            item_count: item_count,
-            is_header: is_header,
+            size,
+            item_count,
+            is_header,
             has_header: flags & HAS_HEADER != 0,
             start_pos: if is_header {
                 end_pos

@@ -3,9 +3,9 @@ use std::str;
 
 use error::Result;
 
-pub static APE_PREAMBLE: &'static [u8] = b"APETAGEX";
-static ID3V1_HEADER: &'static [u8] = b"TAG";
-static LYRICS3V2_HEADER: &'static [u8] = b"LYRICS200";
+pub static APE_PREAMBLE: &[u8] = b"APETAGEX";
+static ID3V1_HEADER: &[u8] = b"TAG";
+static LYRICS3V2_HEADER: &[u8] = b"LYRICS200";
 
 /// Position of ID3v1 tag
 pub const ID3V1_OFFSET: i64 = -128;

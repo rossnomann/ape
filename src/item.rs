@@ -8,7 +8,7 @@ pub const KIND_BINARY: u32 = 1;
 pub const KIND_LOCATOR: u32 = 2;
 pub const KIND_TEXT: u32 = 0;
 
-const DENIED_KEYS: [&'static str; 4] = ["ID3", "TAG", "OggS", "MP+"];
+const DENIED_KEYS: [&str; 4] = ["ID3", "TAG", "OggS", "MP+"];
 
 /// Represents an [APE Item Value][1]
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Item_Value
@@ -57,10 +57,7 @@ impl Item {
         if key.chars().any(|c| !c.is_ascii()) {
             return Err(Error::InvalidItemKeyValue);
         }
-        Ok(Item {
-            key: key,
-            value: value,
-        })
+        Ok(Item { key, value })
     }
 
     /// Creates an item with Binary value.
