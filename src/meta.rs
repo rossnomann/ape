@@ -181,19 +181,19 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "APE tag does not exists")]
     fn not_found() {
         let mut data = Cursor::new((1..200).collect::<Vec<u8>>());
-        Meta::read(&mut data).unwrap();
+        let err = Meta::read(&mut data).unwrap_err().to_string();
+        assert_eq!(err, "APE tag does not exists");
     }
 
     #[test]
-    #[should_panic(expected = "Invalid APE version")]
     fn invalid_ape_version() {
         let mut data = Cursor::new(Vec::<u8>::new());
         data.write_all(b"APETAGEX").unwrap();
         data.write_u32::<LittleEndian>(1000).unwrap();
         data.write_all(&[0; 20]).unwrap();
-        Meta::read(&mut data).unwrap();
+        let err = Meta::read(&mut data).unwrap_err().to_string();
+        assert_eq!(err, "Invalid APE version");
     }
 }

@@ -35,22 +35,6 @@ pub enum Error {
 }
 
 impl StdError for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Io(ref err) => err.description(),
-            Error::ParseInt(ref err) => err.description(),
-            Error::FromUtf8(ref err) => err.description(),
-            Error::BadItemKind => "Unexpected item kind",
-            Error::BadTagSize => "APE header contains invalid tag size",
-            Error::EmptyTag => "Unable to perform operations on empty tag",
-            Error::InvalidApeVersion => "Invalid APE version",
-            Error::InvalidItemKeyLen => "Item keys can have a length of 2 up to 255 characters",
-            Error::InvalidItemKeyValue => "Item key contains non-ascii characters",
-            Error::ItemKeyDenied => "Not allowed are the following keys: ID3, TAG, OggS and MP+",
-            Error::TagNotFound => "APE tag does not exists",
-        }
-    }
-
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match *self {
             Error::Io(ref err) => Some(err),
@@ -68,7 +52,24 @@ impl fmt::Debug for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        write!(out, "{}", self.description())
+        match *self {
+            Error::Io(ref err) => write!(out, "{}", err),
+            Error::ParseInt(ref err) => write!(out, "{}", err),
+            Error::FromUtf8(ref err) => write!(out, "{}", err),
+            Error::BadItemKind => write!(out, "Unexpected item kind"),
+            Error::BadTagSize => write!(out, "APE header contains invalid tag size"),
+            Error::EmptyTag => write!(out, "Unable to perform operations on empty tag"),
+            Error::InvalidApeVersion => write!(out, "Invalid APE version"),
+            Error::InvalidItemKeyLen => {
+                write!(out, "Item keys can have a length of 2 up to 255 characters")
+            }
+            Error::InvalidItemKeyValue => write!(out, "Item key contains non-ascii characters"),
+            Error::ItemKeyDenied => write!(
+                out,
+                "Not allowed are the following keys: ID3, TAG, OggS and MP+"
+            ),
+            Error::TagNotFound => write!(out, "APE tag does not exists"),
+        }
     }
 }
 

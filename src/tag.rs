@@ -315,21 +315,21 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "Unable to perform operations on empty tag")]
     fn write_failed_with_empty_tag() {
-        Tag::new().write("data/empty").unwrap();
+        let err = Tag::new().write("data/empty").unwrap_err().to_string();
+        assert_eq!(err, "Unable to perform operations on empty tag");
     }
 
     #[test]
-    #[should_panic(expected = "Unexpected item kind")]
     fn read_failed_with_bad_item_kind() {
-        read("data/bad-item-kind.apev2").unwrap();
+        let err = read("data/bad-item-kind.apev2").unwrap_err().to_string();
+        assert_eq!(err, "Unexpected item kind");
     }
 
     #[test]
-    #[should_panic(expected = "APE header contains invalid tag size")]
     fn read_failed_with_bad_tag_size() {
-        read("data/bad-tag-size.apev2").unwrap();
+        let err = read("data/bad-tag-size.apev2").unwrap_err().to_string();
+        assert_eq!(err, "APE header contains invalid tag size");
     }
 
     #[test]

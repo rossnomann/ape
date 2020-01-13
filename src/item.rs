@@ -130,9 +130,9 @@ mod test {
     use std::io::{Cursor, Read};
 
     #[test]
-    #[should_panic(expected = "Item keys can have a length of 2 up to 255 characters")]
     fn new_failed_with_bad_key_len() {
-        Item::from_text("k", "val").unwrap();
+        let err = Item::from_text("k", "val").unwrap_err().to_string();
+        assert_eq!(err, "Item keys can have a length of 2 up to 255 characters");
     }
 
     #[test]
@@ -151,9 +151,11 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "Item key contains non-ascii characters")]
     fn new_failed_with_bad_key_val() {
-        Item::from_text("Недопустимые символы", "val").unwrap();
+        let err = Item::from_text("Недопустимые символы", "val")
+            .unwrap_err()
+            .to_string();
+        assert_eq!(err, "Item key contains non-ascii characters");
     }
 
     #[test]
