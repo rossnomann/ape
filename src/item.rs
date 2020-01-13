@@ -66,12 +66,12 @@ impl Item {
     }
 
     /// Creates an item with Locator value.
-    pub fn from_locator<S: Into<String>>(key: S, value: S) -> Result<Item> {
+    pub fn from_locator<K: Into<String>, V: Into<String>>(key: K, value: V) -> Result<Item> {
         Self::new(key, ItemValue::Locator(value.into()))
     }
 
     /// Creates an item with Text value.
-    pub fn from_text<S: Into<String>>(key: S, value: S) -> Result<Item> {
+    pub fn from_text<K: Into<String>, V: Into<String>>(key: K, value: V) -> Result<Item> {
         Self::new(key, ItemValue::Text(value.into()))
     }
 
@@ -139,7 +139,7 @@ mod test {
     fn new_failed_with_denied_key() {
         let msg = "Not allowed are the following keys: ID3, TAG, OggS and MP+";
         for key in DENIED_KEYS.iter() {
-            match Item::from_text(key.to_string(), "val".to_string()) {
+            match Item::from_text((*key).to_string(), "val") {
                 Err(err) => {
                     assert_eq!(msg, format!("{}", err));
                 }
