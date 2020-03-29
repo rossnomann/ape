@@ -5,7 +5,7 @@ use crate::{
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Read, Seek, SeekFrom};
 
-pub const APE_VERSION: u32 = 2000;
+pub(super) const APE_VERSION: u32 = 2000;
 const APE_HEADER_SIZE: i64 = 32;
 
 const HAS_HEADER: u32 = 1 << 31;
@@ -13,23 +13,23 @@ const HAS_NO_FOOTER: u32 = 1 << 30;
 const IS_HEADER: u32 = 1 << 29;
 
 #[derive(Debug)]
-pub struct Meta {
+pub(super) struct Meta {
     // Tag size in bytes including footer and all tag items excluding the header.
-    pub size: u32,
+    pub(super) size: u32,
     // Number of items in the Tag.
-    pub item_count: u32,
+    pub(super) item_count: u32,
     // This is the header, not the footer.
-    pub is_header: bool,
+    pub(super) is_header: bool,
     // Tag contains a header.
-    pub has_header: bool,
+    pub(super) has_header: bool,
     // Initial position of the Tag items.
-    pub start_pos: u64,
+    pub(super) start_pos: u64,
     // End position of the Tag items.
-    pub end_pos: u64,
+    pub(super) end_pos: u64,
 }
 
 impl Meta {
-    pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
+    pub(super) fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
         let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))? || probe_ape(reader, SeekFrom::Start(0))?;
         // When located at the end of an MP3 file, an APE tag should be placed after
         // the the last frame, just before the ID3v1 tag (if any).
