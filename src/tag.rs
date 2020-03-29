@@ -9,7 +9,9 @@ use std::{
     fs::{File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},
     path::Path,
+    slice::Iter as SliceIter,
     str,
+    vec::IntoIter as VecIntoIter,
 };
 
 const BUFFER_SIZE: u64 = 65536;
@@ -40,10 +42,7 @@ const BUFFER_SIZE: u64 = 65536;
 /// tag.write(path).unwrap();
 /// ```
 #[derive(Debug, Default)]
-pub struct Tag {
-    /// A vector of items included in the tag.
-    pub items: Vec<Item>,
-}
+pub struct Tag(Vec<Item>);
 
 impl Tag {
     /// Creates a new empty tag.
@@ -54,10 +53,10 @@ impl Tag {
     /// Returns an item by key.
     pub fn item(&self, key: &str) -> Option<&Item> {
         let key = key.to_string();
-        self.items
+        self.0
             .iter()
             .position(|item| item.key == key)
-            .and_then(|idx| self.items.get(idx))
+            .and_then(|idx| self.0.get(idx))
     }
 
     /// Sets a new item.
@@ -65,7 +64,7 @@ impl Tag {
     /// If there is an item with the same key, it will be removed.
     pub fn set_item(&mut self, item: Item) {
         self.remove_item(item.key.as_ref());
-        self.items.push(item);
+        self.0.push(item);
     }
 
     /// Removes an item by key.
@@ -73,10 +72,10 @@ impl Tag {
     /// Returns true, if item was removed, and false otherwise.
     pub fn remove_item(&mut self, key: &str) -> bool {
         let key = key.to_string();
-        self.items
+        self.0
             .iter()
             .position(|item| item.key == key)
-            .map(|idx| self.items.remove(idx))
+            .map(|idx| self.0.remove(idx))
             .is_some()
     }
 
@@ -86,7 +85,7 @@ impl Tag {
     ///
     /// It is considered an error if there are no items in the tag.
     pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if self.items.is_empty() {
+        if self.0.is_empty() {
             return Err(Error::EmptyTag);
         }
 
@@ -112,7 +111,7 @@ impl Tag {
 
         // Convert items to bytes
         let mut items = Vec::<Vec<u8>>::new();
-        for item in &self.items {
+        for item in &self.0 {
             items.push(item.to_vec()?);
         }
         // APE tag items should be sorted ascending by size
@@ -131,7 +130,7 @@ impl Tag {
         // Tag size including footer
         file.write_u32::<LittleEndian>(size as u32)?;
         // Item count
-        file.write_u32::<LittleEndian>(self.items.len() as u32)?;
+        file.write_u32::<LittleEndian>(self.0.len() as u32)?;
         // Tag flags
         file.write_u32::<LittleEndian>(0)?;
         // Reserved
@@ -142,6 +141,20 @@ impl Tag {
         // Write ID3v1 and LYRICS3v2 (if any)
         file.write_all(&id3)?;
         Ok(())
+    }
+
+    /// Returns an iterator over the tag
+    pub fn iter(&self) -> SliceIter<Item> {
+        self.0.iter()
+    }
+}
+
+impl IntoIterator for Tag {
+    type Item = Item;
+    type IntoIter = VecIntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 
@@ -195,7 +208,7 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Tag> {
     if file.seek(SeekFrom::Current(0))? != meta.end_pos {
         Err(Error::BadTagSize)
     } else {
-        Ok(Tag { items })
+        Ok(Tag(items))
     }
 }
 
@@ -273,9 +286,9 @@ mod test {
     fn items() {
         let mut tag = Tag::new();
         let item = Item::from_text("key", "value").unwrap();
-        assert_eq!(0, tag.items.len());
+        assert_eq!(0, tag.0.len());
         tag.set_item(item);
-        assert_eq!(1, tag.items.len());
+        assert_eq!(1, tag.0.len());
         assert_eq!(
             "value",
             match tag.item("key").unwrap().value {
@@ -284,7 +297,7 @@ mod test {
             }
         );
         assert!(tag.remove_item("key"));
-        assert_eq!(0, tag.items.len());
+        assert_eq!(0, tag.0.len());
         assert!(!tag.remove_item("key"));
     }
 
@@ -300,7 +313,7 @@ mod test {
         tag.write(path).unwrap();
 
         let tag = read(path).unwrap();
-        assert_eq!(1, tag.items.len());
+        assert_eq!(1, tag.0.len());
         assert_eq!(
             "value",
             match tag.item("key").unwrap().value {
