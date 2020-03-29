@@ -16,7 +16,7 @@ pub(super) const ID3V1_OFFSET: i64 = -128;
 /// in the Lyrics3 v2.00 tag field.
 const LYRICS3V2_SIZE: i64 = 6;
 
-/// Checks whether ape tag exists
+/// Checks whether APE tag exists
 pub(super) fn probe_ape<R: Read + Seek>(reader: &mut R, pos: SeekFrom) -> Result<bool> {
     let capacity = APE_PREAMBLE.len();
     let mut preamble = Vec::<u8>::with_capacity(capacity);

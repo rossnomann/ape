@@ -32,7 +32,7 @@ impl Meta {
     pub(super) fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
         let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))? || probe_ape(reader, SeekFrom::Start(0))?;
         // When located at the end of an MP3 file, an APE tag should be placed after
-        // the the last frame, just before the ID3v1 tag (if any).
+        // the last frame, just before the ID3v1 tag (if any).
         if !found && probe_id3v1(reader)? {
             found = probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - APE_HEADER_SIZE))?;
             if !found {
