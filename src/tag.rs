@@ -321,13 +321,13 @@ mod test {
     #[test]
     fn write_failed_with_empty_tag() {
         let err = Tag::new().write("data/empty").unwrap_err().to_string();
-        assert_eq!(err, "Unable to perform operations on empty tag");
+        assert_eq!(err, "unable to perform operations on empty tag");
     }
 
     #[test]
     fn read_failed_with_bad_item_kind() {
         let err = read("data/bad-item-kind.apev2").unwrap_err().to_string();
-        assert_eq!(err, "Unexpected item kind");
+        assert_eq!(err, "unexpected item kind");
     }
 
     #[test]

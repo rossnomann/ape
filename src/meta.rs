@@ -188,6 +188,6 @@ mod test {
         data.write_u32::<LittleEndian>(1000).unwrap();
         data.write_all(&[0; 20]).unwrap();
         let err = Meta::read(&mut data).unwrap_err().to_string();
-        assert_eq!(err, "Invalid APE version");
+        assert_eq!(err, "invalid APE version");
     }
 }

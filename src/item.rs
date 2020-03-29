@@ -129,12 +129,12 @@ mod test {
     #[test]
     fn new_failed_with_bad_key_len() {
         let err = Item::from_text("k", "val").unwrap_err().to_string();
-        assert_eq!(err, "Item keys can have a length of 2 up to 255 characters");
+        assert_eq!(err, "item keys can have a length of 2 up to 255 characters");
     }
 
     #[test]
     fn new_failed_with_denied_key() {
-        let msg = "Not allowed are the following keys: ID3, TAG, OggS and MP+";
+        let msg = "not allowed are the following keys: ID3, TAG, OggS and MP+";
         for key in DENIED_KEYS.iter() {
             match Item::from_text((*key).to_string(), "val") {
                 Err(err) => {
@@ -150,7 +150,7 @@ mod test {
     #[test]
     fn new_failed_with_bad_key_val() {
         let err = Item::from_text("Недопустимые символы", "val").unwrap_err().to_string();
-        assert_eq!(err, "Item key contains non-ascii characters");
+        assert_eq!(err, "item key contains non-ascii characters");
     }
 
     #[test]
