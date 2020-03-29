@@ -10,12 +10,12 @@
 //! ## Creating a tag
 //!
 //! ```no_run
-//! use ape::{Tag, Item};
+//! use ape::{write, Item, Tag};
 //!
 //! let mut tag = Tag::new();
 //! let item = Item::from_text("artist", "Artist Name").unwrap();
 //! tag.set_item(item);
-//! tag.write("path/to/file").unwrap();
+//! write(&tag, "path/to/file").unwrap();
 //! ```
 //!
 //! ## Reading a tag
@@ -31,14 +31,14 @@
 //! ## Updating a tag
 //!
 //! ```no_run
-//! use ape::{read, Item};
+//! use ape::{read, write, Item};
 //!
 //! let path = "path/to/file";
 //! let mut tag = read(path).unwrap();
 //! let item = Item::from_text("album", "Album Name").unwrap();
 //! tag.set_item(item);
 //! tag.remove_item("cover");
-//! tag.write(path).unwrap();
+//! write(&tag, path).unwrap();
 //! ```
 //!
 //! ## Deleting a tag
@@ -55,7 +55,7 @@
 pub use self::{
     error::{Error, Result},
     item::{Item, ItemValue},
-    tag::{read, remove, Tag},
+    tag::{read, remove, write, Tag},
 };
 
 mod error;

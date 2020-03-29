@@ -22,24 +22,24 @@ const BUFFER_SIZE: u64 = 65536;
 /// ## Creating a tag
 ///
 /// ```no_run
-/// use ape::{Tag, Item};
+/// use ape::{write, Item, Tag};
 ///
 /// let mut tag = Tag::new();
 /// let item = Item::from_text("artist", "Artist Name").unwrap();
 /// tag.set_item(item);
-/// tag.write("path/to/file").unwrap();
+/// write(&tag, "path/to/file").unwrap();
 /// ```
 /// # Updating a tag
 ///
 /// ```no_run
-/// use ape::{read, Item};
+/// use ape::{read, write, Item};
 ///
 /// let path = "path/to/file";
 /// let mut tag = read(path).unwrap();
 /// let item = Item::from_text("album", "Album Name").unwrap();
 /// tag.set_item(item);
 /// tag.remove_item("cover");
-/// tag.write(path).unwrap();
+/// write(&tag, path).unwrap();
 /// ```
 #[derive(Debug, Default)]
 pub struct Tag(Vec<Item>);
@@ -79,70 +79,6 @@ impl Tag {
             .is_some()
     }
 
-    /// Attempts to write the APE Tag to the file at the specified path.
-    ///
-    /// # Errors
-    ///
-    /// It is considered an error if there are no items in the tag.
-    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if self.0.is_empty() {
-            return Err(Error::EmptyTag);
-        }
-
-        remove(&path)?;
-
-        let mut file = &OpenOptions::new().read(true).write(true).open(path)?;
-
-        // Keep ID3v1 and LYRICS3v2 (if any)
-        let mut id3 = Vec::<u8>::new();
-        let filesize = file.seek(SeekFrom::End(0))?;
-        if probe_id3v1(&mut file)? {
-            let mut end_size: i64 = 128;
-            let lyrcis3v2_size = probe_lyrics3v2(&mut file)?;
-            if lyrcis3v2_size != -1 {
-                end_size += lyrcis3v2_size;
-            }
-            file.seek(SeekFrom::End(-end_size))?;
-            file.take(end_size as u64).read_to_end(&mut id3)?;
-            file.seek(SeekFrom::End(-end_size))?;
-            file.set_len(filesize - end_size as u64)?;
-        }
-        file.seek(SeekFrom::End(0))?;
-
-        // Convert items to bytes
-        let mut items = Vec::<Vec<u8>>::new();
-        for item in &self.0 {
-            items.push(item.to_vec()?);
-        }
-        // APE tag items should be sorted ascending by size
-        items.sort_by(|a, b| a.len().cmp(&b.len()));
-        let mut size = 32; // Tag size including footer
-
-        // Write items
-        for item in items {
-            size += item.len();
-            file.write_all(&item)?;
-        }
-
-        // Write footer
-        file.write_all(APE_PREAMBLE)?;
-        file.write_u32::<LittleEndian>(APE_VERSION)?;
-        // Tag size including footer
-        file.write_u32::<LittleEndian>(size as u32)?;
-        // Item count
-        file.write_u32::<LittleEndian>(self.0.len() as u32)?;
-        // Tag flags
-        file.write_u32::<LittleEndian>(0)?;
-        // Reserved
-        for _ in 0..8 {
-            file.write_u8(0)?;
-        }
-
-        // Write ID3v1 and LYRICS3v2 (if any)
-        file.write_all(&id3)?;
-        Ok(())
-    }
-
     /// Returns an iterator over the tag
     pub fn iter(&self) -> SliceIter<Item> {
         self.0.iter()
@@ -156,6 +92,70 @@ impl IntoIterator for Tag {
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
+}
+
+/// Attempts to write the APE Tag to the file at the specified path.
+///
+/// # Errors
+///
+/// It is considered an error if there are no items in the tag.
+pub fn write<P: AsRef<Path>>(tag: &Tag, path: P) -> Result<()> {
+    if tag.0.is_empty() {
+        return Err(Error::EmptyTag);
+    }
+
+    remove(&path)?;
+
+    let mut file = &OpenOptions::new().read(true).write(true).open(path)?;
+
+    // Keep ID3v1 and LYRICS3v2 (if any)
+    let mut id3 = Vec::<u8>::new();
+    let filesize = file.seek(SeekFrom::End(0))?;
+    if probe_id3v1(&mut file)? {
+        let mut end_size: i64 = 128;
+        let lyrcis3v2_size = probe_lyrics3v2(&mut file)?;
+        if lyrcis3v2_size != -1 {
+            end_size += lyrcis3v2_size;
+        }
+        file.seek(SeekFrom::End(-end_size))?;
+        file.take(end_size as u64).read_to_end(&mut id3)?;
+        file.seek(SeekFrom::End(-end_size))?;
+        file.set_len(filesize - end_size as u64)?;
+    }
+    file.seek(SeekFrom::End(0))?;
+
+    // Convert items to bytes
+    let mut items = Vec::<Vec<u8>>::new();
+    for item in &tag.0 {
+        items.push(item.to_vec()?);
+    }
+    // APE tag items should be sorted ascending by size
+    items.sort_by(|a, b| a.len().cmp(&b.len()));
+    let mut size = 32; // Tag size including footer
+
+    // Write items
+    for item in items {
+        size += item.len();
+        file.write_all(&item)?;
+    }
+
+    // Write footer
+    file.write_all(APE_PREAMBLE)?;
+    file.write_u32::<LittleEndian>(APE_VERSION)?;
+    // Tag size including footer
+    file.write_u32::<LittleEndian>(size as u32)?;
+    // Item count
+    file.write_u32::<LittleEndian>(tag.0.len() as u32)?;
+    // Tag flags
+    file.write_u32::<LittleEndian>(0)?;
+    // Reserved
+    for _ in 0..8 {
+        file.write_u8(0)?;
+    }
+
+    // Write ID3v1 and LYRICS3v2 (if any)
+    file.write_all(&id3)?;
+    Ok(())
 }
 
 /// Attempts to read APE tag from the file at the specified path.
@@ -275,7 +275,7 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
 
 #[cfg(test)]
 mod test {
-    use super::{read, remove, Tag};
+    use super::{read, remove, write, Tag};
     use crate::item::{Item, ItemValue};
     use std::{
         fs::{remove_file, File},
@@ -310,7 +310,7 @@ mod test {
 
         let mut tag = Tag::new();
         tag.set_item(Item::from_text("key", "value").unwrap());
-        tag.write(path).unwrap();
+        write(&tag, path).unwrap();
 
         let tag = read(path).unwrap();
         assert_eq!(1, tag.0.len());
@@ -333,7 +333,7 @@ mod test {
 
     #[test]
     fn write_failed_with_empty_tag() {
-        let err = Tag::new().write("data/empty").unwrap_err().to_string();
+        let err = write(&Tag::new(), "data/empty").unwrap_err().to_string();
         assert_eq!(err, "unable to perform operations on empty tag");
     }
 
