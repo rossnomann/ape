@@ -89,7 +89,7 @@ impl Item {
     }
 
     /// Creates a representation of the item suitable for writing to a file.
-    pub fn to_vec(&self) -> Result<Vec<u8>> {
+    pub(super) fn to_vec(&self) -> Result<Vec<u8>> {
         let mut cursor = Cursor::new(Vec::<u8>::new());
         let size: u32;
         let flags: u32;
