@@ -1,7 +1,7 @@
 use crate::{
     error::{Error, Result},
     item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT},
-    meta::{Meta, APE_VERSION},
+    meta::{Meta, MetaPosition, APE_VERSION},
     util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE},
 };
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -13,8 +13,6 @@ use std::{
     str,
     vec::IntoIter as VecIntoIter,
 };
-
-const BUFFER_SIZE: u64 = 65536;
 
 /// An APE Tag containing APE Tag Items.
 /// # Examples
@@ -242,18 +240,22 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
     };
     let mut size = meta.size as u64;
     let mut offset;
-    if meta.is_header {
-        offset = 0;
-        size += 32;
-    } else {
-        offset = meta.start_pos;
-        if meta.has_header {
-            offset -= 32;
+    match meta.position {
+        MetaPosition::Header => {
+            offset = 0;
             size += 32;
+        }
+        MetaPosition::Footer => {
+            offset = meta.start_pos;
+            if meta.has_header {
+                offset -= 32;
+                size += 32;
+            }
         }
     }
     let filesize = file.seek(SeekFrom::End(0))?;
     let movesize = filesize - offset - size;
+    const BUFFER_SIZE: u64 = 65536;
     if movesize > 0 {
         file.flush()?;
         file.seek(SeekFrom::Start(offset + size))?;

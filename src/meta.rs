@@ -6,22 +6,19 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Read, Seek, SeekFrom};
 
 pub(super) const APE_VERSION: u32 = 2000;
-const APE_HEADER_SIZE: i64 = 32;
-
-const HAS_HEADER: u32 = 1 << 31;
-const HAS_NO_FOOTER: u32 = 1 << 30;
-const IS_HEADER: u32 = 1 << 29;
 
 #[derive(Debug)]
 pub(super) struct Meta {
     // Tag size in bytes including footer and all tag items excluding the header.
     pub(super) size: u32,
-    // Number of items in the Tag.
-    pub(super) item_count: u32,
-    // This is the header, not the footer.
-    pub(super) is_header: bool,
+    // Position of the metadata.
+    pub(super) position: MetaPosition,
     // Tag contains a header.
     pub(super) has_header: bool,
+    // Tag contains a footer.
+    pub(super) has_footer: bool,
+    // Number of items in the Tag.
+    pub(super) item_count: u32,
     // Initial position of the Tag items.
     pub(super) start_pos: u64,
     // End position of the Tag items.
@@ -30,6 +27,8 @@ pub(super) struct Meta {
 
 impl Meta {
     pub(super) fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
+        const APE_HEADER_SIZE: i64 = 32;
+
         let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))? || probe_ape(reader, SeekFrom::Start(0))?;
         // When located at the end of an MP3 file, an APE tag should be placed after
         // the last frame, just before the ID3v1 tag (if any).
@@ -51,32 +50,69 @@ impl Meta {
         }
         let size = reader.read_u32::<LittleEndian>()?;
         let item_count = reader.read_u32::<LittleEndian>()?;
-        let flags = reader.read_u32::<LittleEndian>()?;
+        let flags = MetaFlags::from_raw(reader.read_u32::<LittleEndian>()?);
         // The following 8 bytes are reserved
-        let end_pos = reader.seek(SeekFrom::Current(8))?;
-        let is_header = flags & IS_HEADER != 0;
+        const RESERVED_BYTES_NUM: i64 = 8;
+        let end_pos = reader.seek(SeekFrom::Current(RESERVED_BYTES_NUM))?;
         Ok(Meta {
             size,
+            position: flags.position,
+            has_header: flags.has_header,
+            has_footer: flags.has_footer,
             item_count,
-            is_header,
-            has_header: flags & HAS_HEADER != 0,
-            start_pos: if is_header { end_pos } else { end_pos - size as u64 },
-            end_pos: if is_header {
-                let mut pos = end_pos + size as u64;
-                if flags & HAS_NO_FOOTER == 0 {
-                    pos -= 32;
+            start_pos: match flags.position {
+                MetaPosition::Header => end_pos,
+                MetaPosition::Footer => end_pos - size as u64,
+            },
+            end_pos: match flags.position {
+                MetaPosition::Header => {
+                    let mut pos = end_pos + size as u64;
+                    if flags.has_footer {
+                        pos -= APE_HEADER_SIZE as u64;
+                    }
+                    pos
                 }
-                pos
-            } else {
-                end_pos - 32
+                MetaPosition::Footer => end_pos - APE_HEADER_SIZE as u64,
             },
         })
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(super) enum MetaPosition {
+    // It's header of the tag.
+    Header,
+    // It's footer of the tag.
+    Footer,
+}
+
+const HAS_HEADER: u32 = 1 << 31;
+const HAS_NO_FOOTER: u32 = 1 << 30;
+const IS_HEADER: u32 = 1 << 29;
+
+struct MetaFlags {
+    position: MetaPosition,
+    has_header: bool,
+    has_footer: bool,
+}
+
+impl MetaFlags {
+    fn from_raw(raw: u32) -> Self {
+        Self {
+            position: if raw & IS_HEADER != 0 {
+                MetaPosition::Header
+            } else {
+                MetaPosition::Footer
+            },
+            has_header: raw & HAS_HEADER != 0,
+            has_footer: raw & HAS_NO_FOOTER == 0,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::{Meta, HAS_HEADER, HAS_NO_FOOTER, IS_HEADER};
+    use super::*;
     use byteorder::{LittleEndian, WriteBytesExt};
     use std::io::{Cursor, Write};
 
@@ -96,7 +132,7 @@ mod test {
         let meta = Meta::read(&mut data).unwrap();
         assert_eq!(size, meta.size);
         assert_eq!(item_count, meta.item_count);
-        assert!(!meta.is_header);
+        assert_eq!(meta.position, MetaPosition::Footer);
         assert!(!meta.has_header);
         assert_eq!(92, meta.start_pos);
         assert_eq!(100, meta.end_pos);
@@ -118,7 +154,7 @@ mod test {
         let meta = Meta::read(&mut data).unwrap();
         assert_eq!(size, meta.size);
         assert_eq!(item_count, meta.item_count);
-        assert!(meta.is_header);
+        assert_eq!(meta.position, MetaPosition::Header);
         assert!(meta.has_header);
         assert_eq!(32, meta.start_pos);
         assert_eq!(82, meta.end_pos);
@@ -142,7 +178,7 @@ mod test {
         let meta = Meta::read(&mut data).unwrap();
         assert_eq!(size, meta.size);
         assert_eq!(item_count, meta.item_count);
-        assert!(!meta.is_header);
+        assert_eq!(meta.position, MetaPosition::Footer);
         assert!(!meta.has_header);
         assert_eq!(270, meta.start_pos);
         assert_eq!(300, meta.end_pos);
@@ -168,7 +204,7 @@ mod test {
         let meta = Meta::read(&mut data).unwrap();
         assert_eq!(size, meta.size);
         assert_eq!(item_count, meta.item_count);
-        assert!(!meta.is_header);
+        assert_eq!(meta.position, MetaPosition::Footer);
         assert!(!meta.has_header);
         assert_eq!(562, meta.start_pos);
         assert_eq!(600, meta.end_pos);
