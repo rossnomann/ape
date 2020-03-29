@@ -1,9 +1,9 @@
-use std::io::{Read, Seek, SeekFrom};
-
+use crate::{
+    error::{Error, Result},
+    util::{probe_ape, probe_id3v1, probe_lyrics3v2, ID3V1_OFFSET},
+};
 use byteorder::{LittleEndian, ReadBytesExt};
-
-use error::{Error, Result};
-use util::{probe_ape, probe_id3v1, probe_lyrics3v2, ID3V1_OFFSET};
+use std::io::{Read, Seek, SeekFrom};
 
 pub const APE_VERSION: u32 = 2000;
 const APE_HEADER_SIZE: i64 = 32;
@@ -30,8 +30,7 @@ pub struct Meta {
 
 impl Meta {
     pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Meta> {
-        let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))?
-            || probe_ape(reader, SeekFrom::Start(0))?;
+        let mut found = probe_ape(reader, SeekFrom::End(-APE_HEADER_SIZE))? || probe_ape(reader, SeekFrom::Start(0))?;
         // When located at the end of an MP3 file, an APE tag should be placed after
         // the the last frame, just before the ID3v1 tag (if any).
         if !found && probe_id3v1(reader)? {
@@ -40,8 +39,7 @@ impl Meta {
                 // ID3v1 tag maybe preceded by Lyrics3v2: http://id3.org/Lyrics3v2
                 let size = probe_lyrics3v2(reader)?;
                 if size != -1 {
-                    found =
-                        probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE))?;
+                    found = probe_ape(reader, SeekFrom::End(ID3V1_OFFSET - size - APE_HEADER_SIZE))?;
                 }
             }
         }
@@ -62,11 +60,7 @@ impl Meta {
             item_count,
             is_header,
             has_header: flags & HAS_HEADER != 0,
-            start_pos: if is_header {
-                end_pos
-            } else {
-                end_pos - size as u64
-            },
+            start_pos: if is_header { end_pos } else { end_pos - size as u64 },
             end_pos: if is_header {
                 let mut pos = end_pos + size as u64;
                 if flags & HAS_NO_FOOTER == 0 {

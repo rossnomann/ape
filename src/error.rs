@@ -1,9 +1,7 @@
-use std::error::Error as StdError;
-use std::fmt;
-use std::io::Error as IoError;
-use std::num::ParseIntError;
-use std::result::Result as StdResult;
-use std::str::Utf8Error;
+use std::{
+    error::Error as StdError, fmt, io::Error as IoError, num::ParseIntError, result::Result as StdResult,
+    str::Utf8Error,
+};
 
 /// A specialized Result type for metadata operations.
 pub type Result<T> = StdResult<T, Error>;
@@ -55,14 +53,9 @@ impl fmt::Display for Error {
             Error::BadTagSize => write!(out, "APE header contains invalid tag size"),
             Error::EmptyTag => write!(out, "Unable to perform operations on empty tag"),
             Error::InvalidApeVersion => write!(out, "Invalid APE version"),
-            Error::InvalidItemKeyLen => {
-                write!(out, "Item keys can have a length of 2 up to 255 characters")
-            }
+            Error::InvalidItemKeyLen => write!(out, "Item keys can have a length of 2 up to 255 characters"),
             Error::InvalidItemKeyValue => write!(out, "Item key contains non-ascii characters"),
-            Error::ItemKeyDenied => write!(
-                out,
-                "Not allowed are the following keys: ID3, TAG, OggS and MP+"
-            ),
+            Error::ItemKeyDenied => write!(out, "Not allowed are the following keys: ID3, TAG, OggS and MP+"),
             Error::TagNotFound => write!(out, "APE tag does not exists"),
         }
     }

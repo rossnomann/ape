@@ -52,11 +52,11 @@
 
 #![warn(missing_docs)]
 
-extern crate byteorder;
-
-pub use error::{Error, Result};
-pub use item::{Item, ItemValue};
-pub use tag::{read, remove, Tag};
+pub use self::{
+    error::{Error, Result},
+    item::{Item, ItemValue},
+    tag::{read, remove, Tag},
+};
 
 mod error;
 mod item;

@@ -1,8 +1,6 @@
-use std::io::{Cursor, Write};
-
+use crate::error::{Error, Result};
 use byteorder::{LittleEndian, WriteBytesExt};
-
-use error::{Error, Result};
+use std::io::{Cursor, Write};
 
 pub const KIND_BINARY: u32 = 1;
 pub const KIND_LOCATOR: u32 = 2;
@@ -124,9 +122,8 @@ impl Item {
 
 #[cfg(test)]
 mod test {
-    extern crate byteorder;
-    use self::byteorder::{LittleEndian, ReadBytesExt};
     use super::{Item, ItemValue, DENIED_KEYS, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
+    use byteorder::{LittleEndian, ReadBytesExt};
     use std::io::{Cursor, Read};
 
     #[test]
@@ -152,9 +149,7 @@ mod test {
 
     #[test]
     fn new_failed_with_bad_key_val() {
-        let err = Item::from_text("Недопустимые символы", "val")
-            .unwrap_err()
-            .to_string();
+        let err = Item::from_text("Недопустимые символы", "val").unwrap_err().to_string();
         assert_eq!(err, "Item key contains non-ascii characters");
     }
 
@@ -229,12 +224,7 @@ mod test {
 
     #[test]
     fn to_vec() {
-        let mut data = Cursor::new(
-            Item::from_binary("cover", vec![1, 2, 3])
-                .unwrap()
-                .to_vec()
-                .unwrap(),
-        );
+        let mut data = Cursor::new(Item::from_binary("cover", vec![1, 2, 3]).unwrap().to_vec().unwrap());
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(3, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();
@@ -245,33 +235,18 @@ mod test {
             item_key.push(k);
             k = data.read_u8().unwrap();
         }
-        assert_eq!(
-            "cover",
-            item_key.iter().map(|&c| c as char).collect::<String>()
-        );
+        assert_eq!("cover", item_key.iter().map(|&c| c as char).collect::<String>());
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
-        data.take(item_size as u64)
-            .read_to_end(&mut item_value)
-            .unwrap();
+        data.take(item_size as u64).read_to_end(&mut item_value).unwrap();
         assert_eq!(vec![1, 2, 3], item_value);
 
-        let mut data = Cursor::new(
-            Item::from_text("artist", "Artist")
-                .unwrap()
-                .to_vec()
-                .unwrap(),
-        );
+        let mut data = Cursor::new(Item::from_text("artist", "Artist").unwrap().to_vec().unwrap());
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(6, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(KIND_TEXT, (item_flags & 6) >> 1);
 
-        let mut data = Cursor::new(
-            Item::from_locator("url", "http://test.com")
-                .unwrap()
-                .to_vec()
-                .unwrap(),
-        );
+        let mut data = Cursor::new(Item::from_locator("url", "http://test.com").unwrap().to_vec().unwrap());
         let item_size = data.read_u32::<LittleEndian>().unwrap();
         assert_eq!(15, item_size);
         let item_flags = data.read_u32::<LittleEndian>().unwrap();

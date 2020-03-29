@@ -1,14 +1,16 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::Path;
-use std::str;
-
+use crate::{
+    error::{Error, Result},
+    item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT},
+    meta::{Meta, APE_VERSION},
+    util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE},
+};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-
-use error::{Error, Result};
-use item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT};
-use meta::{Meta, APE_VERSION};
-use util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE};
+use std::{
+    fs::{File, OpenOptions},
+    io::{Read, Seek, SeekFrom, Write},
+    path::Path,
+    str,
+};
 
 const BUFFER_SIZE: u64 = 65536;
 
@@ -261,9 +263,11 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
 #[cfg(test)]
 mod test {
     use super::{read, remove, Tag};
-    use item::{Item, ItemValue};
-    use std::fs::{remove_file, File};
-    use std::io::Write;
+    use crate::item::{Item, ItemValue};
+    use std::{
+        fs::{remove_file, File},
+        io::Write,
+    };
 
     #[test]
     fn items() {

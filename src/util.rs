@@ -1,7 +1,8 @@
-use std::io::{Read, Seek, SeekFrom};
-use std::str;
-
-use error::Result;
+use crate::error::Result;
+use std::{
+    io::{Read, Seek, SeekFrom},
+    str,
+};
 
 pub static APE_PREAMBLE: &[u8] = b"APETAGEX";
 static ID3V1_HEADER: &[u8] = b"TAG";
