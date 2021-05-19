@@ -10,20 +10,20 @@
 //! ## Creating a tag
 //!
 //! ```no_run
-//! use ape::{write, Item, Tag};
+//! use ape::{Item, Tag, write_to_path};
 //!
 //! let mut tag = Tag::new();
 //! let item = Item::from_text("artist", "Artist Name").unwrap();
 //! tag.set_item(item);
-//! write(&tag, "path/to/file").unwrap();
+//! write_to_path(&tag, "path/to/file").unwrap();
 //! ```
 //!
 //! ## Reading a tag
 //!
 //! ```no_run
-//! use ape::read;
+//! use ape::read_from_path;
 //!
-//! let tag = read("path/to/file").unwrap();
+//! let tag = read_from_path("path/to/file").unwrap();
 //! let item = tag.item("artist").unwrap();
 //! println!("{:?}", item.value);
 //! ```
@@ -31,22 +31,22 @@
 //! ## Updating a tag
 //!
 //! ```no_run
-//! use ape::{read, write, Item};
+//! use ape::{Item, write_to_path, read_from_path};
 //!
 //! let path = "path/to/file";
-//! let mut tag = read(path).unwrap();
+//! let mut tag = read_from_path(path).unwrap();
 //! let item = Item::from_text("album", "Album Name").unwrap();
 //! tag.set_item(item);
 //! tag.remove_item("cover");
-//! write(&tag, path).unwrap();
+//! write_to_path(&tag, path).unwrap();
 //! ```
 //!
 //! ## Deleting a tag
 //!
 //! ```no_run
-//! use ape::remove;
+//! use ape::remove_from_path;
 //!
-//! remove("path/to/file").unwrap();
+//! remove_from_path("path/to/file").unwrap();
 //! ```
 //!
 
@@ -55,7 +55,7 @@
 pub use self::{
     error::{Error, Result},
     item::{Item, ItemValue},
-    tag::{read, remove, write, Tag},
+    tag::{read_from, read_from_path, remove_from, remove_from_path, write_to, write_to_path, Tag},
 };
 
 mod error;
