@@ -92,7 +92,7 @@ impl IntoIterator for Tag {
     }
 }
 
-/// Attempts to write the APE to the file at the specified path.
+/// Attempts to write the APE tag to the file at the specified path.
 ///
 /// # Errors
 ///
@@ -108,7 +108,7 @@ pub fn write_to_path<P: AsRef<Path>>(tag: &Tag, path: P) -> Result<()> {
     Ok(())
 }
 
-/// Attempts to write the APE Tag to a File.
+/// Attempts to write the APE tag to a File.
 ///
 /// # Errors
 /// Same errors apply as [`write_to_path`]
@@ -176,7 +176,7 @@ pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
     Ok(())
 }
 
-/// Attempts to read APE tag from the file at the specified path.
+/// Attempts to read an APE tag from the file at the specified path.
 ///
 /// # Errors
 ///
