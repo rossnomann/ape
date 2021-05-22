@@ -46,7 +46,7 @@ impl Item {
     fn new<S: Into<String>>(key: S, value: ItemValue) -> Result<Item> {
         let key = key.into();
         let len = key.len();
-        if len < 2 || len > 255 {
+        if !(2..=255).contains(&len) {
             return Err(Error::InvalidItemKeyLen);
         }
         if DENIED_KEYS.contains(&key.as_str()) {

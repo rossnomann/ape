@@ -145,7 +145,8 @@ pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
         items.push(item.to_vec()?);
     }
     // APE tag items should be sorted ascending by size
-    items.sort_by(|a, b| a.len().cmp(&b.len()));
+    items.sort_by_key(|a| a.len());
+
     let mut size = 32; // Tag size including footer
 
     // Write items
