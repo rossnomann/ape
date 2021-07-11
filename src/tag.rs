@@ -52,8 +52,7 @@ impl Tag {
     pub fn item(&self, key: &str) -> Option<&Item> {
         self.0
             .iter()
-            .position(|item| item.key.eq_ignore_ascii_case(key))
-            .and_then(|idx| self.0.get(idx))
+            .find(|item| item.key.eq_ignore_ascii_case(key))
     }
 
     /// Sets a new item.
