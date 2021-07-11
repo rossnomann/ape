@@ -93,15 +93,7 @@ impl IntoIterator for Tag {
 }
 
 /// Attempts to write the APE tag to the file at the specified path.
-///
-/// # Errors
-///
-/// It is considered an error if there are no items in the tag.
 pub fn write_to_path<P: AsRef<Path>>(tag: &Tag, path: P) -> Result<()> {
-    if tag.0.is_empty() {
-        return Err(Error::EmptyTag);
-    }
-
     let mut file = OpenOptions::new().read(true).write(true).open(path)?;
     write_to(tag, &mut file)?;
 
@@ -109,14 +101,7 @@ pub fn write_to_path<P: AsRef<Path>>(tag: &Tag, path: P) -> Result<()> {
 }
 
 /// Attempts to write the APE tag to a File.
-///
-/// # Errors
-/// Same errors apply as [`write_to_path`]
 pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
-    if tag.0.is_empty() {
-        return Err(Error::EmptyTag);
-    }
-
     remove_from(file)?;
 
     // Keep ID3v1 and LYRICS3v2 (if any)
@@ -139,20 +124,23 @@ pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
 
     file.seek(SeekFrom::End(0))?;
 
-    // Convert items to bytes
-    let mut items = Vec::<Vec<u8>>::new();
-    for item in &tag.0 {
-        items.push(item.to_vec()?);
-    }
-    // APE tag items should be sorted ascending by size
-    items.sort_by_key(|a| a.len());
-
     let mut size = 32; // Tag size including footer
 
-    // Write items
-    for item in items {
-        size += item.len();
-        file.write_all(&item)?;
+    // Convert items to bytes
+    let mut items = Vec::<Vec<u8>>::new();
+
+    if !tag.0.is_empty() {
+        for item in &tag.0 {
+            items.push(item.to_vec()?);
+        }
+        // APE tag items should be sorted ascending by size
+        items.sort_by_key(|a| a.len());
+
+        // Write items
+        for item in items {
+            size += item.len();
+            file.write_all(&item)?;
+        }
     }
 
     // Write footer
@@ -390,9 +378,13 @@ mod test {
     }
 
     #[test]
-    fn write_failed_with_empty_tag() {
-        let err = write_to_path(&Tag::new(), "data/empty").unwrap_err().to_string();
-        assert_eq!(err, "unable to perform operations on empty tag");
+    fn read_with_empty_tag() {
+        assert!(read_from_path("data/empty-tag.apev2").is_ok());
+    }
+
+    #[test]
+    fn write_with_empty_tag() {
+        assert!(write_to_path(&Tag::new(), "data/empty-tag.apev2").is_ok());
     }
 
     #[test]

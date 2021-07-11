@@ -19,8 +19,6 @@ pub enum Error {
     BadItemKind,
     /// APE header contains invalid tag size.
     BadTagSize,
-    /// Unable to write a tag without items.
-    EmptyTag,
     /// Invalid APE version. It works with APEv2 tags only.
     InvalidApeVersion,
     /// Item keys can have a length of 2 (including) up to 255 (including) characters.
@@ -51,7 +49,6 @@ impl fmt::Display for Error {
             Error::FromUtf8(ref err) => write!(out, "{}", err),
             Error::BadItemKind => write!(out, "unexpected item kind"),
             Error::BadTagSize => write!(out, "APE header contains invalid tag size"),
-            Error::EmptyTag => write!(out, "unable to perform operations on empty tag"),
             Error::InvalidApeVersion => write!(out, "invalid APE version"),
             Error::InvalidItemKeyLen => write!(out, "item keys can have a length of 2 up to 255 characters"),
             Error::InvalidItemKeyValue => write!(out, "item key contains non-ascii characters"),
