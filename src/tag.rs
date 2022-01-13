@@ -52,11 +52,9 @@ impl Tag {
 
     /// Returns an item by key.
     pub fn item(&self, key: &str) -> Option<&Item> {
-        let key = key.to_string();
         self.0
             .iter()
-            .position(|item| item.key == key)
-            .and_then(|idx| self.0.get(idx))
+            .find(|item| item.key.eq_ignore_ascii_case(key))
     }
 
     /// Sets a new item.
@@ -71,10 +69,9 @@ impl Tag {
     ///
     /// Returns true, if item was removed, and false otherwise.
     pub fn remove_item(&mut self, key: &str) -> bool {
-        let key = key.to_string();
         self.0
             .iter()
-            .position(|item| item.key == key)
+            .position(|item| item.key.eq_ignore_ascii_case(key))
             .map(|idx| self.0.remove(idx))
             .is_some()
     }
