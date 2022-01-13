@@ -102,6 +102,14 @@ pub fn write_to_path<P: AsRef<Path>>(tag: &Tag, path: P) -> Result<()> {
 
 /// Attempts to write the APE tag to a File.
 pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
+    // Convert items to bytes
+    // Do it as early as possible because if there is any error,
+    // we return it without modifying the file
+    let mut items = tag.iter().map(|item| item.to_vec()).collect::<Result<Vec<_>>>()?;
+
+    // APE tag items should be sorted ascending by size
+    items.sort_by_key(|a| a.len());
+
     remove_from(file)?;
 
     // Keep ID3v1 and LYRICS3v2 (if any)
@@ -126,21 +134,10 @@ pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
 
     let mut size = 32; // Tag size including footer
 
-    // Convert items to bytes
-    let mut items = Vec::<Vec<u8>>::new();
-
-    if !tag.0.is_empty() {
-        for item in &tag.0 {
-            items.push(item.to_vec()?);
-        }
-        // APE tag items should be sorted ascending by size
-        items.sort_by_key(|a| a.len());
-
-        // Write items
-        for item in items {
-            size += item.len();
-            file.write_all(&item)?;
-        }
+    // Write items
+    for item in items {
+        size += item.len();
+        file.write_all(&item)?;
     }
 
     // Write footer
