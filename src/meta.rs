@@ -15,8 +15,6 @@ pub(super) struct Meta {
     pub(super) position: MetaPosition,
     // Tag contains a header.
     pub(super) has_header: bool,
-    // Tag contains a footer.
-    pub(super) has_footer: bool,
     // Number of items in the Tag.
     pub(super) item_count: u32,
     // Initial position of the Tag items.
@@ -58,7 +56,6 @@ impl Meta {
             size,
             position: flags.position,
             has_header: flags.has_header,
-            has_footer: flags.has_footer,
             item_count,
             start_pos: match flags.position {
                 MetaPosition::Header => end_pos,
