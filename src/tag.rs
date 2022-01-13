@@ -15,6 +15,7 @@ use std::{
 };
 
 /// An APE Tag containing APE Tag Items.
+///
 /// # Examples
 ///
 /// ## Creating a tag
@@ -27,7 +28,8 @@ use std::{
 /// tag.set_item(item);
 /// write_to_path(&tag, "path/to/file").unwrap();
 /// ```
-/// # Updating a tag
+///
+/// ## Updating a tag
 ///
 /// ```no_run
 /// use ape::{Item, read_from_path, write_to_path};
@@ -190,7 +192,8 @@ pub fn read_from_path<P: AsRef<Path>>(path: P) -> Result<Tag> {
 /// Attempts to read an APE tag from a reader
 ///
 /// # Errors
-/// Same errors apply as [`read_from_path`]
+///
+/// See [`read_from_path`](fn.read_from_path.html)
 pub fn read_from<R: Read + Seek>(reader: &mut R) -> Result<Tag> {
     let meta = Meta::read(reader)?;
     let mut items = Vec::<Item>::new();
@@ -253,7 +256,8 @@ pub fn remove_from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// Attempts to remove an APE tag from a File
 ///
 /// # Errors
-/// Same errors apply as [`remove_from_path`]
+///
+/// See [`remove_from_path`](fn.remove_from_path.html)
 pub fn remove_from(file: &mut File) -> Result<()> {
     let meta = match Meta::read(file) {
         Ok(meta) => meta,

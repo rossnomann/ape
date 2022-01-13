@@ -9,6 +9,7 @@ pub const KIND_TEXT: u32 = 0;
 const DENIED_KEYS: [&str; 4] = ["ID3", "TAG", "OggS", "MP+"];
 
 /// Represents an [APE Item Value][1]
+///
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Item_Value
 #[derive(Debug)]
 pub enum ItemValue {
@@ -21,6 +22,7 @@ pub enum ItemValue {
 }
 
 /// Represents an [APE Tag Item][1].
+///
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Tag_Item
 #[derive(Debug)]
 pub struct Item {
@@ -35,9 +37,11 @@ pub struct Item {
     /// Not allowed are the following keys: ID3, TAG, OggS and MP+.
     ///
     /// Read the [specification][1] for more information.
+    ///
     /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_key
     pub key: String,
     /// Represents an [APE Item Value][1]
+    ///
     /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Item_Value
     pub value: ItemValue,
 }
@@ -59,7 +63,7 @@ impl Item {
     }
 
     /// Creates an item with Binary value.
-    pub fn from_binary<S: Into<String>>(key: S, value: Vec<u8>) -> Result<Item> {
+    pub fn from_binary<K: Into<String>>(key: K, value: Vec<u8>) -> Result<Item> {
         Self::new(key, ItemValue::Binary(value))
     }
 

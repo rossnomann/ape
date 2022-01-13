@@ -9,11 +9,11 @@ pub type Result<T> = StdResult<T, Error>;
 /// Describes all errors that may occur.
 #[derive(Debug)]
 pub enum Error {
-    /// An IO error occured. Contains `std::io::Error`.
+    /// An IO error occured.
     Io(IoError),
     /// An error when attempting to interpret a sequence of u8 as a string.
     FromUtf8(Utf8Error),
-    /// An error when parsing an integer. Contains `std::num::ParseIntError`.
+    /// An error when parsing an integer.
     ParseInt(ParseIntError),
     /// Unexpected item kind given while parsing a tag.
     BadItemKind,

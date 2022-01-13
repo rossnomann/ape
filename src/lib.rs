@@ -3,7 +3,6 @@
 //! An APE tag is a tag used to add metadata (title, artist, album, etc...) to digital audio files.
 //!
 //! Read the [specification][1] for more information.
-//! [1]: http://wiki.hydrogenaud.io/index.php?title=APEv2_specification
 //!
 //! # Examples
 //!
@@ -48,6 +47,8 @@
 //!
 //! remove_from_path("path/to/file").unwrap();
 //! ```
+//!
+//! [1]: http://wiki.hydrogenaud.io/index.php?title=APEv2_specification
 //!
 
 #![warn(missing_docs)]
