@@ -52,9 +52,7 @@ impl Tag {
 
     /// Returns an item by key.
     pub fn item(&self, key: &str) -> Option<&Item> {
-        self.0
-            .iter()
-            .find(|item| item.key.eq_ignore_ascii_case(key))
+        self.0.iter().find(|item| item.key.eq_ignore_ascii_case(key))
     }
 
     /// Sets a new item.
