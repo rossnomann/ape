@@ -8,6 +8,14 @@ A library for reading and writing [APEv2 tags][1].
 
 ## Changelog
 
+### 0.4.0 (13.01.2022)
+
+- Switched to 2021 edition.
+- Updated byteorder to 1.4
+- Support reading/writing/removing tags from opened files.
+- Case insensitive key comparison.
+- Support writing an empty tag.
+
 ### 0.3.0 (29.03.2020)
 
 - Switched to 2018 edition.
