@@ -11,7 +11,7 @@ const DENIED_KEYS: [&str; 4] = ["ID3", "TAG", "OggS", "MP+"];
 /// Represents an [APE Item Value][1]
 ///
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Item_Value
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ItemValue {
     /// Binary data. Unrecommended to use.
     Binary(Vec<u8>),
@@ -24,7 +24,7 @@ pub enum ItemValue {
 /// Represents an [APE Tag Item][1].
 ///
 /// [1]: http://wiki.hydrogenaud.io/index.php?title=APE_Tag_Item
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Item {
     /// Item key for accessing special meta-information in an audio file.
     ///

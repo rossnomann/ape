@@ -41,7 +41,7 @@ use std::{
 /// tag.remove_item("cover");
 /// write_to_path(&tag, path).unwrap();
 /// ```
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Tag(Vec<Item>);
 
 impl Tag {
