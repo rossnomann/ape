@@ -38,7 +38,7 @@ use std::{
 /// let mut tag = read_from_path(path).unwrap();
 /// let item = Item::from_text("album", "Album Name").unwrap();
 /// tag.set_item(item);
-/// tag.remove_item("cover");
+/// tag.remove_items("cover");
 /// write_to_path(&tag, path).unwrap();
 /// ```
 #[derive(Debug, Clone, Default)]
@@ -50,28 +50,53 @@ impl Tag {
         Self::default()
     }
 
-    /// Returns an item by key.
+    /// Returns a first found item by key.
     pub fn item(&self, key: &str) -> Option<&Item> {
         self.0.iter().find(|item| item.key.eq_ignore_ascii_case(key))
+    }
+
+    /// Returns all items by key.
+    pub fn items(&self, key: &str) -> Vec<&Item> {
+        self.0
+            .iter()
+            .filter(move |item| item.key.eq_ignore_ascii_case(key))
+            .collect()
     }
 
     /// Sets a new item.
     ///
     /// If there is an item with the same key, it will be removed.
     pub fn set_item(&mut self, item: Item) {
-        self.remove_item(item.key.as_ref());
-        self.0.push(item);
+        self.remove_items(item.key.as_ref());
+        self.add_item(item)
     }
 
-    /// Removes an item by key.
+    /// Adds a new item.
     ///
-    /// Returns true, if item was removed, and false otherwise.
-    pub fn remove_item(&mut self, key: &str) -> bool {
-        self.0
+    /// Unlike `set_item`, existing items with the same key are not removed.
+    pub fn add_item(&mut self, item: Item) {
+        self.0.push(item)
+    }
+
+    /// Removes all items by key.
+    ///
+    /// Returns a number of deleted items
+    pub fn remove_items(&mut self, key: &str) -> usize {
+        let mut count = 0;
+        self.0 = self
+            .0
             .iter()
-            .position(|item| item.key.eq_ignore_ascii_case(key))
-            .map(|idx| self.0.remove(idx))
-            .is_some()
+            .cloned()
+            .filter_map(|item| {
+                if item.key.eq_ignore_ascii_case(key) {
+                    count += 1;
+                    None
+                } else {
+                    Some(item)
+                }
+            })
+            .collect();
+        count
     }
 
     /// Returns an iterator over the tag
@@ -327,20 +352,36 @@ mod test {
         assert_eq!(0, tag.0.len());
 
         let item = Item::from_text("key", "value").unwrap();
+        let item_duplicate = Item::from_text("key", "value-added").unwrap();
+        let item_replace = Item::from_text("key", "value-replaced").unwrap();
+        let item_unchanged = Item::from_text("key1", "value-unchanged").unwrap();
 
         tag.set_item(item);
+        assert_eq!(tag.items("key").len(), 1);
         assert_eq!(1, tag.0.len());
 
+        tag.set_item(item_replace);
+        assert_eq!(tag.items("key").len(), 1);
+        assert_eq!(1, tag.0.len());
+
+        tag.add_item(item_unchanged);
+        assert_eq!(tag.items("key").len(), 1);
+        assert_eq!(2, tag.0.len());
+
+        tag.add_item(item_duplicate);
+        assert_eq!(tag.items("key").len(), 2);
+        assert_eq!(3, tag.0.len());
+
         assert_eq!(
-            "value",
+            "value-replaced",
             match tag.item("key").unwrap().value {
                 ItemValue::Text(ref val) => val,
                 _ => panic!("Invalid value"),
             }
         );
-        assert!(tag.remove_item("key"));
-        assert_eq!(0, tag.0.len());
-        assert!(!tag.remove_item("key"));
+        assert_eq!(tag.remove_items("key"), 2);
+        assert_eq!(tag.items("key").len(), 0);
+        assert_eq!(1, tag.0.len());
     }
 
     #[test]

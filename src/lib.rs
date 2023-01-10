@@ -36,7 +36,7 @@
 //! let mut tag = read_from_path(path).unwrap();
 //! let item = Item::from_text("album", "Album Name").unwrap();
 //! tag.set_item(item);
-//! tag.remove_item("cover");
+//! tag.remove_items("cover");
 //! write_to_path(&tag, path).unwrap();
 //! ```
 //!
