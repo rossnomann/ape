@@ -2,7 +2,7 @@
 
 A library for reading and writing [APEv2 tags][1].
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/rossnomann/rust-ape/CI?style=flat-square)](https://github.com/rossnomann/rust-ape/actions/)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/rossnomann/rust-ape/ci.yml?style=flat-square)](https://github.com/rossnomann/rust-ape/actions/)
 [![Downloads](https://img.shields.io/crates/d/ape.svg?style=flat-square)](https://crates.io/crates/ape/)
 [![Documentation](https://img.shields.io/badge/docs-rs-yellowgreen.svg?style=flat-square)](https://docs.rs/ape)
 
@@ -13,7 +13,7 @@ A library for reading and writing [APEv2 tags][1].
 - Switched to 2021 edition.
 - Updated byteorder to 1.4
 - Support reading/writing/removing tags from opened files.
-- Case insensitive key comparison.
+- Case-insensitive key comparison.
 - Support writing an empty tag.
 
 ### 0.3.0 (29.03.2020)
