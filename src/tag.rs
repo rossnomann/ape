@@ -220,7 +220,7 @@ pub fn read_from<R: Read + Seek>(reader: &mut R) -> Result<Tag> {
         });
     }
 
-    if reader.seek(SeekFrom::Current(0))? != meta.end_pos {
+    if reader.stream_position()? != meta.end_pos {
         Err(Error::BadTagSize)
     } else {
         Ok(Tag(items))
@@ -294,7 +294,7 @@ pub fn remove_from(file: &mut File) -> Result<()> {
         file.seek(SeekFrom::Start(offset + size))?;
 
         let mut buff = Vec::<u8>::with_capacity(BUFFER_SIZE as usize);
-        file.take(BUFFER_SIZE as u64).read_to_end(&mut buff)?;
+        file.take(BUFFER_SIZE).read_to_end(&mut buff)?;
 
         while !buff.is_empty() {
             file.seek(SeekFrom::Start(offset))?;
@@ -302,7 +302,7 @@ pub fn remove_from(file: &mut File) -> Result<()> {
             offset += buff.len() as u64;
             file.seek(SeekFrom::Start(offset + size))?;
             buff.clear();
-            file.take(BUFFER_SIZE as u64).read_to_end(&mut buff)?;
+            file.take(BUFFER_SIZE).read_to_end(&mut buff)?;
         }
     }
 

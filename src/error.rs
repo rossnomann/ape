@@ -44,9 +44,9 @@ impl StdError for Error {
 impl fmt::Display for Error {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Io(ref err) => write!(out, "{}", err),
-            Error::ParseInt(ref err) => write!(out, "{}", err),
-            Error::FromUtf8(ref err) => write!(out, "{}", err),
+            Error::Io(ref err) => write!(out, "{err}"),
+            Error::ParseInt(ref err) => write!(out, "{err}"),
+            Error::FromUtf8(ref err) => write!(out, "{err}"),
             Error::BadItemKind => write!(out, "unexpected item kind"),
             Error::BadTagSize => write!(out, "APE header contains invalid tag size"),
             Error::InvalidApeVersion => write!(out, "invalid APE version"),

@@ -142,7 +142,7 @@ mod test {
         for key in DENIED_KEYS.iter() {
             match Item::from_text((*key).to_string(), "val") {
                 Err(err) => {
-                    assert_eq!(msg, format!("{}", err));
+                    assert_eq!(msg, format!("{err}"));
                 }
                 Ok(_) => {
                     panic!("Unexpected item");
