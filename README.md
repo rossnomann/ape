@@ -8,6 +8,16 @@ A library for reading and writing [APEv2 tags][1].
 
 ## Changelog
 
+### 0.5.0 (11.01.2023)
+
+- Add support for multiple values under same key
+  - Add `Tag::items()` method.
+  - Add `Tag::add_item()` method.
+  - Replace `Tag::remove_item()` by `Tag::remove_items()` method.
+  `Tag::item()` method returns a first found item.
+  `Tag::set_item()` removes all items under the given key and adds a new one.
+- Derive `Clone` for  `Item` and `ItemValue` structs.
+
 ### 0.4.0 (13.01.2022)
 
 - Switched to 2021 edition.
