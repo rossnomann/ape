@@ -1,4 +1,4 @@
-# RUST-APE
+# APE
 
 A library for reading and writing [APEv2 tags][1].
 
