@@ -56,7 +56,7 @@ impl Item {
         if DENIED_KEYS.contains(&key.as_str()) {
             return Err(Error::ItemKeyDenied);
         }
-        if key.chars().any(|c| !c.is_ascii()) {
+        if !key.is_ascii() {
             return Err(Error::InvalidItemKeyValue);
         }
         Ok(Item { key, value })
