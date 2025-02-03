@@ -65,7 +65,7 @@ impl Tag {
 
     /// Sets a new item.
     ///
-    /// If there is an item with the same key, it will be removed.
+    /// If there is an item with the same key (case insensitive), it will be removed.
     pub fn set_item(&mut self, item: Item) {
         self.remove_items(item.key.as_ref());
         self.0.push(item)
