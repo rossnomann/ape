@@ -68,13 +68,6 @@ impl Tag {
     /// If there is an item with the same key, it will be removed.
     pub fn set_item(&mut self, item: Item) {
         self.remove_items(item.key.as_ref());
-        self.add_item(item)
-    }
-
-    /// Adds a new item.
-    ///
-    /// Unlike `set_item`, existing items with the same key are not removed.
-    pub fn add_item(&mut self, item: Item) {
         self.0.push(item)
     }
 
@@ -364,22 +357,22 @@ mod test {
         assert_eq!(tag.items("key").len(), 1);
         assert_eq!(1, tag.0.len());
 
-        tag.add_item(item_unchanged);
+        tag.set_item(item_unchanged);
         assert_eq!(tag.items("key").len(), 1);
         assert_eq!(2, tag.0.len());
 
-        tag.add_item(item_duplicate);
-        assert_eq!(tag.items("key").len(), 2);
-        assert_eq!(3, tag.0.len());
+        tag.set_item(item_duplicate);
+        assert_eq!(tag.items("key").len(), 1);
+        assert_eq!(2, tag.0.len());
 
         assert_eq!(
-            "value-replaced",
+            "value-added",
             match tag.item("key").unwrap().value {
                 ItemValue::Text(ref val) => val,
                 _ => panic!("Invalid value"),
             }
         );
-        assert_eq!(tag.remove_items("key"), 2);
+        assert_eq!(tag.remove_items("key"), 1);
         assert_eq!(tag.items("key").len(), 0);
         assert_eq!(1, tag.0.len());
     }
