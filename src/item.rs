@@ -83,19 +83,24 @@ impl Item {
         })
     }
 
+    /// Returns a type of the item.
+    pub fn get_type(&self) -> ItemType {
+        self.item_type
+    }
+
     /// Adds a new value separated by `\0`.
     pub fn add_value(&mut self, value: &[u8]) {
         self.item_value.push(0);
         self.item_value.extend(value);
     }
 
-    /// Replaces a type
+    /// Replaces a type.
     pub fn with_type(mut self, item_type: ItemType) -> Self {
         self.item_type = item_type;
         self
     }
 
-    /// Replaces a value
+    /// Replaces a value.
     pub fn with_value<V: Into<Vec<u8>>>(mut self, value: V) -> Self {
         self.item_value = value.into();
         self
@@ -211,6 +216,7 @@ mod test {
         let mut item = Item::new("key", ItemType::Binary, initial_value.clone()).unwrap();
         assert_eq!("key", item.key);
         assert_eq!(ItemType::Binary, item.item_type);
+        assert_eq!(item.get_type(), item.item_type);
         assert_eq!(initial_value, item.item_value);
         item.add_value(String::from("x").as_ref());
         assert_eq!(vec![1, 0, 120], item.item_value);
