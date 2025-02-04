@@ -20,6 +20,7 @@
                 extensions = [
                   "rust-docs"
                   "clippy"
+                  "llvm-tools"
                 ];
               }
             ))
