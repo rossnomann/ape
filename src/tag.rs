@@ -365,6 +365,8 @@ mod test {
         assert_eq!(tag.remove_items("key"), 1);
         assert_eq!(tag.items("key").len(), 0);
         assert_eq!(1, tag.0.len());
+
+        assert_eq!(tag.into_iter().count(), 1);
     }
 
     #[test]
@@ -375,13 +377,45 @@ mod test {
         data.write_all(&[0; 200]).unwrap();
 
         let mut tag = Tag::new();
-        tag.set_item(Item::new("key", ItemType::Text, "value").unwrap());
+        tag.set_item(Item::new("key1", ItemType::Text, "value1").unwrap());
+        tag.set_item(Item::new("key2", ItemType::Text, String::from("value2")).unwrap());
+        let mut text_multiple = Item::new("key3", ItemType::Text, String::from("value3-1")).unwrap();
+        text_multiple.add_value(String::from("value3-2").as_ref());
+        tag.set_item(text_multiple);
+        tag.set_item(Item::new("key4", ItemType::Locator, "value4").unwrap());
+        tag.set_item(Item::new("key5", ItemType::Binary, [0, 0, 0]).unwrap());
         write_to_path(&tag, path).unwrap();
 
         let tag = read_from_path(path).unwrap();
-        assert_eq!(1, tag.0.len());
-        let value: &str = tag.item("key").unwrap().try_into().unwrap();
-        assert_eq!("value", value);
+        assert_eq!(5, tag.0.len());
+        let value: &str = tag.item("key1").unwrap().try_into().unwrap();
+        assert_eq!("value1", value);
+
+        let value: Vec<u8> = tag.item("key1").unwrap().into();
+        assert_eq!(vec![118, 97, 108, 117, 101, 49], value);
+        let value: Vec<u8> = tag.item("key1").unwrap().clone().into();
+        assert_eq!(vec![118, 97, 108, 117, 101, 49], value);
+
+        let value: String = tag.item("key2").unwrap().clone().try_into().unwrap();
+        assert_eq!("value2", value);
+
+        let value: &str = tag.item("key3").unwrap().try_into().unwrap();
+        assert_eq!("value3-1\0value3-2", value);
+
+        let value: Vec<&str> = tag.item("key3").unwrap().try_into().unwrap();
+        assert_eq!(vec!["value3-1", "value3-2"], value);
+
+        let value: Vec<String> = tag.item("key3").unwrap().clone().try_into().unwrap();
+        assert_eq!(vec!["value3-1", "value3-2"], value);
+
+        let value: Vec<&str> = tag.item("key4").unwrap().try_into().unwrap();
+        assert_eq!(vec!["value4"], value);
+
+        let value: Vec<u8> = tag.item("key5").unwrap().into();
+        assert_eq!(vec![0, 0, 0], value);
+
+        let value: Vec<&str> = tag.item("key5").unwrap().try_into().unwrap();
+        assert_eq!(vec!["", "", "", ""], value);
 
         remove_from_path(path).unwrap();
         match read_from_path(path) {
