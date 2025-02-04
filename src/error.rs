@@ -23,13 +23,15 @@ pub enum Error {
     Io(IoError),
     /// Not allowed are the following keys: ID3, TAG, OggS and MP+.
     ItemKeyDenied,
-    /// Failed to parse an item key
+    /// Failed to parse an item key.
     ParseItemKey(Utf8Error),
-    /// Failed to parse an item key
+    /// Can not convert a value of an item with binary type to an UTF-8 string.
+    ParseItemBinary,
+    /// Failed to parse an item value.
     ParseItemValue(Utf8Error),
-    /// Failed to parse Lyrics3V2 size
+    /// Failed to parse Lyrics3V2 size.
     ParseLyrics3V2SizeStr(Utf8Error),
-    /// Failed to parse Lyrics3V2 size
+    /// Failed to parse Lyrics3V2 size.
     ParseLyrics3V2SizeInt(ParseIntError),
     /// There is no APE tag in a file.
     TagNotFound,
@@ -59,6 +61,7 @@ impl fmt::Display for Error {
             Self::Io(ref err) => write!(out, "{err}"),
             Self::ItemKeyDenied => write!(out, "not allowed are the following keys: ID3, TAG, OggS and MP+"),
             Self::ParseItemKey(ref err) => write!(out, "parse item key: {err}"),
+            Self::ParseItemBinary => write!(out, "can not convert a binary value to an UTF-8 string"),
             Self::ParseItemValue(ref err) => write!(out, "parse item value: {err}"),
             Self::ParseLyrics3V2SizeStr(ref err) => write!(out, "parse Lyrics3V2 size: {}", err),
             Self::ParseLyrics3V2SizeInt(ref err) => write!(out, "parse Lyrics3V2 size: {}", err),

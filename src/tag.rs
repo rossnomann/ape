@@ -327,7 +327,7 @@ pub fn remove_from(file: &mut File) -> Result<()> {
 
 #[cfg(test)]
 mod test {
-    use super::{read_from_path, remove_from_path, write_to_path, Tag};
+    use super::{read_from_path, remove_from_path, write_to_path, Error, Result, Tag};
     use crate::item::{Item, ItemType};
     use std::{
         fs::{remove_file, File},
@@ -414,8 +414,8 @@ mod test {
         let value: Vec<u8> = tag.item("key5").unwrap().into();
         assert_eq!(vec![0, 0, 0], value);
 
-        let value: Vec<&str> = tag.item("key5").unwrap().try_into().unwrap();
-        assert_eq!(vec!["", "", "", ""], value);
+        let result: Result<Vec<&str>> = tag.item("key5").unwrap().try_into();
+        assert!(matches!(result.unwrap_err(), Error::ParseItemBinary));
 
         remove_from_path(path).unwrap();
         match read_from_path(path) {

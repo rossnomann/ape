@@ -120,11 +120,19 @@ impl Item {
     }
 }
 
+fn parse_string(item: &Item) -> Result<&str> {
+    if let ItemType::Binary = item.item_type {
+        Err(Error::ParseItemBinary)
+    } else {
+        std::str::from_utf8(&item.item_value).map_err(Error::ParseItemValue)
+    }
+}
+
 impl<'a> TryFrom<&'a Item> for &'a str {
     type Error = Error;
 
     fn try_from(value: &'a Item) -> Result<Self> {
-        std::str::from_utf8(&value.item_value).map_err(Error::ParseItemValue)
+        parse_string(value)
     }
 }
 
@@ -132,8 +140,18 @@ impl TryFrom<Item> for String {
     type Error = Error;
 
     fn try_from(value: Item) -> Result<Self> {
-        let result = std::str::from_utf8(&value.item_value).map_err(Error::ParseItemValue)?;
-        Ok(String::from(result))
+        parse_string(&value).map(String::from)
+    }
+}
+
+fn parse_strings(item: &Item) -> Result<impl Iterator<Item = Result<&str>>> {
+    if let ItemType::Binary = item.item_type {
+        Err(Error::ParseItemBinary)
+    } else {
+        Ok(item
+            .item_value
+            .split(|&c| c == 0)
+            .map(|x| std::str::from_utf8(x).map_err(Error::ParseItemValue)))
     }
 }
 
@@ -141,12 +159,7 @@ impl<'a> TryFrom<&'a Item> for Vec<&'a str> {
     type Error = Error;
 
     fn try_from(value: &'a Item) -> Result<Self> {
-        let mut result = Vec::with_capacity(value.item_value.len());
-        for x in value.item_value.split(|&c| c == 0) {
-            let x = std::str::from_utf8(x).map_err(Error::ParseItemValue)?;
-            result.push(x);
-        }
-        Ok(result)
+        parse_strings(value)?.collect()
     }
 }
 
@@ -154,12 +167,7 @@ impl TryFrom<Item> for Vec<String> {
     type Error = Error;
 
     fn try_from(value: Item) -> Result<Self> {
-        let mut result = Vec::with_capacity(value.item_value.len());
-        for x in value.item_value.split(|&c| c == 0) {
-            let x = std::str::from_utf8(x).map_err(Error::ParseItemValue)?;
-            result.push(String::from(x));
-        }
-        Ok(result)
+        parse_strings(&value)?.map(|x| x.map(String::from)).collect()
     }
 }
 
