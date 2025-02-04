@@ -211,7 +211,7 @@ mod test {
     fn not_found() {
         let mut data = Cursor::new((1..200).collect::<Vec<u8>>());
         let err = Meta::read(&mut data).unwrap_err().to_string();
-        assert_eq!(err, "APE tag does not exists");
+        assert_eq!(err, "APE tag does not exist");
     }
 
     #[test]

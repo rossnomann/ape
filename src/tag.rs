@@ -1,6 +1,6 @@
 use crate::{
     error::{Error, Result},
-    item::{Item, KIND_BINARY, KIND_LOCATOR, KIND_TEXT},
+    item::{Item, ItemType},
     meta::{Meta, MetaPosition, APE_VERSION},
     util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE},
 };
@@ -21,10 +21,10 @@ use std::{
 /// ## Creating a tag
 ///
 /// ```no_run
-/// use ape::{Item, Tag, write_to_path};
+/// use ape::{Item, ItemType, Tag, write_to_path};
 ///
 /// let mut tag = Tag::new();
-/// let item = Item::from_text("artist", "Artist Name").unwrap();
+/// let item = Item::new("artist", ItemType::Text, "Artist Name").unwrap();
 /// tag.set_item(item);
 /// write_to_path(&tag, "path/to/file").unwrap();
 /// ```
@@ -32,11 +32,11 @@ use std::{
 /// ## Updating a tag
 ///
 /// ```no_run
-/// use ape::{Item, read_from_path, write_to_path};
+/// use ape::{Item, ItemType, read_from_path, write_to_path};
 ///
 /// let path = "path/to/file";
 /// let mut tag = read_from_path(path).unwrap();
-/// let item = Item::from_text("album", "Album Name").unwrap();
+/// let item = Item::new("album", ItemType::Text, "Album Name").unwrap();
 /// tag.set_item(item);
 /// tag.remove_items("cover");
 /// write_to_path(&tag, path).unwrap();
@@ -195,7 +195,8 @@ pub fn write_to(tag: &Tag, file: &mut File) -> Result<()> {
 ///
 /// let tag = read_from_path("path/to/file").unwrap();
 /// let item = tag.item("artist").unwrap();
-/// println!("{:?}", item.value);
+/// let value: &str = item.try_into().unwrap();
+/// println!("{}", value);
 /// ```
 pub fn read_from_path<P: AsRef<Path>>(path: P) -> Result<Tag> {
     let mut file = OpenOptions::new().read(true).open(path)?;
@@ -227,15 +228,9 @@ pub fn read_from<R: Read + Seek>(reader: &mut R) -> Result<Tag> {
         let mut item_value = Vec::<u8>::with_capacity(item_size as usize);
         reader.take(item_size as u64).read_to_end(&mut item_value)?;
 
-        let item_key = str::from_utf8(&item_key)?;
-        items.push(match (item_flags & 6) >> 1 {
-            KIND_BINARY => Item::from_binary(item_key, item_value)?,
-            KIND_LOCATOR => Item::from_locator(item_key, str::from_utf8(&item_value)?)?,
-            KIND_TEXT => Item::from_text(item_key, str::from_utf8(&item_value)?)?,
-            _ => {
-                return Err(Error::BadItemKind);
-            }
-        });
+        let item_key = str::from_utf8(&item_key).map_err(Error::ParseItemKey)?;
+        let item_type = ItemType::from_flags(item_flags)?;
+        items.push(Item::new(item_key, item_type, item_value)?);
     }
 
     if reader.stream_position()? != meta.end_pos {
@@ -333,7 +328,7 @@ pub fn remove_from(file: &mut File) -> Result<()> {
 #[cfg(test)]
 mod test {
     use super::{read_from_path, remove_from_path, write_to_path, Tag};
-    use crate::item::{Item, ItemValue};
+    use crate::item::{Item, ItemType};
     use std::{
         fs::{remove_file, File},
         io::Write,
@@ -344,10 +339,10 @@ mod test {
         let mut tag = Tag::new();
         assert_eq!(0, tag.0.len());
 
-        let item = Item::from_text("key", "value").unwrap();
-        let item_duplicate = Item::from_text("key", "value-added").unwrap();
-        let item_replace = Item::from_text("key", "value-replaced").unwrap();
-        let item_unchanged = Item::from_text("key1", "value-unchanged").unwrap();
+        let item = Item::new("key", ItemType::Text, "value").unwrap();
+        let item_duplicate = Item::new("key", ItemType::Text, "value-added").unwrap();
+        let item_replace = Item::new("key", ItemType::Text, "value-replaced").unwrap();
+        let item_unchanged = Item::new("key1", ItemType::Text, "value-unchanged").unwrap();
 
         tag.set_item(item);
         assert_eq!(tag.items("key").len(), 1);
@@ -365,13 +360,8 @@ mod test {
         assert_eq!(tag.items("key").len(), 1);
         assert_eq!(2, tag.0.len());
 
-        assert_eq!(
-            "value-added",
-            match tag.item("key").unwrap().value {
-                ItemValue::Text(ref val) => val,
-                _ => panic!("Invalid value"),
-            }
-        );
+        let value: &str = tag.item("key").unwrap().try_into().unwrap();
+        assert_eq!("value-added", value);
         assert_eq!(tag.remove_items("key"), 1);
         assert_eq!(tag.items("key").len(), 0);
         assert_eq!(1, tag.0.len());
@@ -385,18 +375,13 @@ mod test {
         data.write_all(&[0; 200]).unwrap();
 
         let mut tag = Tag::new();
-        tag.set_item(Item::from_text("key", "value").unwrap());
+        tag.set_item(Item::new("key", ItemType::Text, "value").unwrap());
         write_to_path(&tag, path).unwrap();
 
         let tag = read_from_path(path).unwrap();
         assert_eq!(1, tag.0.len());
-        assert_eq!(
-            "value",
-            match tag.item("key").unwrap().value {
-                ItemValue::Text(ref val) => val,
-                _ => panic!("Invalid value"),
-            }
-        );
+        let value: &str = tag.item("key").unwrap().try_into().unwrap();
+        assert_eq!("value", value);
 
         remove_from_path(path).unwrap();
         match read_from_path(path) {
@@ -418,9 +403,17 @@ mod test {
     }
 
     #[test]
-    fn read_failed_with_bad_item_kind() {
-        let err = read_from_path("data/bad-item-kind.apev2").unwrap_err().to_string();
-        assert_eq!(err, "unexpected item kind");
+    fn read_with_multiple_values_item() {
+        let tag = read_from_path("data/multiple-values.apev2").unwrap();
+        assert_eq!(tag.0.len(), 1);
+        let values: Vec<&str> = tag.item("key").unwrap().try_into().unwrap();
+        assert_eq!(values, &["v1", "v2"]);
+    }
+
+    #[test]
+    fn read_failed_with_bad_item_type() {
+        let err = read_from_path("data/bad-item-type.apev2").unwrap_err().to_string();
+        assert_eq!(err, "unexpected item type");
     }
 
     #[test]

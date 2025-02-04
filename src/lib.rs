@@ -9,10 +9,10 @@
 //! ## Creating a tag
 //!
 //! ```no_run
-//! use ape::{Item, Tag, write_to_path};
+//! use ape::{Item, ItemType, Tag, write_to_path};
 //!
 //! let mut tag = Tag::new();
-//! let item = Item::from_text("artist", "Artist Name").unwrap();
+//! let item = Item::new("artist", ItemType::Text, "Artist Name").unwrap();
 //! tag.set_item(item);
 //! write_to_path(&tag, "path/to/file").unwrap();
 //! ```
@@ -24,17 +24,18 @@
 //!
 //! let tag = read_from_path("path/to/file").unwrap();
 //! let item = tag.item("artist").unwrap();
-//! println!("{:?}", item.value);
+//! let value: &str = item.try_into().unwrap();
+//! println!("{}", value);
 //! ```
 //!
 //! ## Updating a tag
 //!
 //! ```no_run
-//! use ape::{Item, write_to_path, read_from_path};
+//! use ape::{Item, ItemType, write_to_path, read_from_path};
 //!
 //! let path = "path/to/file";
 //! let mut tag = read_from_path(path).unwrap();
-//! let item = Item::from_text("album", "Album Name").unwrap();
+//! let item = Item::new("album", ItemType::Text, "Album Name").unwrap();
 //! tag.set_item(item);
 //! tag.remove_items("cover");
 //! write_to_path(&tag, path).unwrap();
@@ -55,7 +56,7 @@
 
 pub use self::{
     error::{Error, Result},
-    item::{Item, ItemValue},
+    item::{Item, ItemType},
     tag::{read_from, read_from_path, remove_from, remove_from_path, write_to, write_to_path, Tag},
 };
 

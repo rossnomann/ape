@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{Error, Result};
 use std::{
     io::{Read, Seek, SeekFrom},
     str,
@@ -46,8 +46,8 @@ pub(super) fn probe_lyrics3v2<R: Read + Seek>(reader: &mut R) -> Result<i64> {
         let mut buf = Vec::<u8>::with_capacity(LYRICS3V2_SIZE as usize);
         reader.seek(SeekFrom::Current(-LYRICS3V2_SIZE))?;
         reader.take(LYRICS3V2_SIZE as u64).read_to_end(&mut buf)?;
-        let raw_size = str::from_utf8(&buf)?;
-        let int_size = raw_size.parse::<i64>()?;
+        let raw_size = str::from_utf8(&buf).map_err(Error::ParseLyrics3V2SizeStr)?;
+        let int_size = raw_size.parse::<i64>().map_err(Error::ParseLyrics3V2SizeInt)?;
         Ok(int_size + LYRICS3V2_SIZE + capacity as i64)
     } else {
         Ok(-1)
