@@ -8,15 +8,41 @@ A library for reading and writing [APEv2 tags][1].
 
 ## Changelog
 
+### 0.6.0 (04.02.2025)
+
+Fixed multiple values support.
+You may need to overwrite your tags if you have called the `Tag::add_item` method with the same key multiple times,
+since the spec [states](https://wiki.hydrogenaud.io/index.php?title=APE_Tag_Item) that
+"Every Tag Item Key can only occures (at most) once".
+
+- Updated byteorder to 1.5.
+- Added `TryFrom<&Item>` trait implementation for `Vec<&str>` and `&str`.
+- Added `TryFrom<Item>` trait implementation for `Vec<String>` and `String`.
+- Removed `ItemValue` enum and `Item.value` field; use `TryFrom` instead.
+- Added `ItemType { Binary, Locator, Text }` enum.
+- Added `Item::new(key, type, value)` method.
+- Removed `Item::from_binary`, `Item::from_locator` and `Item::from_text` methods; use `Item::new` method instead.
+- Added `Item.add_value` method.
+- Removed `Tag::add_item` method; use `Item.add_value` instead.
+- Added `Item::with_type` method.
+- Added `Item::with_value` method.
+- Added `Item.get_type` method.
+- Changed `Error` enum:
+  - Removed: `FromUtf8`, `ParseInt`
+  - Added: `ParseItemKey`, `ParseItemBinary`, `ParseItemValue`, `ParseLyrics3V2SizeStr`, `ParseLyrics3V2SizeInt`.
+  - Changed:
+    - `BadItemType` -> `InvalidItemType(u32)`.
+    - `BadTagSize` -> `InvalidTagSize`.
+
 ### 0.5.0 (11.01.2023)
 
-- Add support for multiple values under same key
-  - Add `Tag::items()` method.
-  - Add `Tag::add_item()` method.
-  - Replace `Tag::remove_item()` by `Tag::remove_items()` method.
-  `Tag::item()` method returns a first found item.
-  `Tag::set_item()` removes all items under the given key and adds a new one.
-- Derive `Clone` for  `Item` and `ItemValue` structs.
+- Added support for multiple values under same key:
+  - Added `Tag::items` method.
+  - Added `Tag::add_item` method.
+  - Replaced `Tag::remove_item` by `Tag::remove_items` method.
+  `Tag::item` method returns a first found item.
+  `Tag::set_item` removes all items under the given key and adds a new one.
+- Added derive `Clone` for `Item` and `ItemValue` structs.
 
 ### 0.4.0 (13.01.2022)
 
