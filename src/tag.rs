@@ -234,7 +234,7 @@ pub fn read_from<R: Read + Seek>(reader: &mut R) -> Result<Tag> {
     }
 
     if reader.stream_position()? != meta.end_pos {
-        Err(Error::BadTagSize)
+        Err(Error::InvalidTagSize)
     } else {
         Ok(Tag(items))
     }
@@ -445,14 +445,14 @@ mod test {
     }
 
     #[test]
-    fn read_failed_with_bad_item_type() {
-        let err = read_from_path("data/bad-item-type.apev2").unwrap_err().to_string();
-        assert_eq!(err, "unexpected item type");
+    fn read_failed_with_invalid_item_type() {
+        let err = read_from_path("data/invalid-item-type.apev2").unwrap_err().to_string();
+        assert_eq!(err, "invalid item type: 3");
     }
 
     #[test]
-    fn read_failed_with_bad_tag_size() {
-        let err = read_from_path("data/bad-tag-size.apev2").unwrap_err().to_string();
+    fn read_failed_with_invalid_tag_size() {
+        let err = read_from_path("data/invalid-tag-size.apev2").unwrap_err().to_string();
         assert_eq!(err, "APE header contains invalid tag size");
     }
 

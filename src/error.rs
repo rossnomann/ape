@@ -9,16 +9,16 @@ pub type Result<T> = StdResult<T, Error>;
 /// Describes all errors that may occur.
 #[derive(Debug)]
 pub enum Error {
-    /// Unexpected item type given while parsing a tag.
-    BadItemType,
-    /// APE header contains invalid tag size.
-    BadTagSize,
     /// Invalid APE version. It works with APEv2 tags only.
     InvalidApeVersion,
     /// Item keys can have a length of 2 (including) up to 255 (including) characters.
     InvalidItemKeyLen,
     /// Item key contains non-ascii characters.
     InvalidItemKeyValue,
+    /// Unexpected item type given while parsing a tag.
+    InvalidItemType(u32),
+    /// APE header contains invalid tag size.
+    InvalidTagSize,
     /// An IO error occured.
     Io(IoError),
     /// Not allowed are the following keys: ID3, TAG, OggS and MP+.
@@ -51,11 +51,11 @@ impl StdError for Error {
 impl fmt::Display for Error {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Self::BadItemType => write!(out, "unexpected item type"),
-            Self::BadTagSize => write!(out, "APE header contains invalid tag size"),
             Self::InvalidApeVersion => write!(out, "invalid APE version"),
             Self::InvalidItemKeyLen => write!(out, "item keys can have a length of 2 up to 255 characters"),
             Self::InvalidItemKeyValue => write!(out, "item key contains non-ascii characters"),
+            Self::InvalidItemType(value) => write!(out, "invalid item type: {value}"),
+            Self::InvalidTagSize => write!(out, "APE header contains invalid tag size"),
             Self::Io(ref err) => write!(out, "{err}"),
             Self::ItemKeyDenied => write!(out, "not allowed are the following keys: ID3, TAG, OggS and MP+"),
             Self::ParseItemKey(ref err) => write!(out, "parse item key: {err}"),

@@ -21,7 +21,7 @@ impl ItemType {
             1 => Self::Binary,
             2 => Self::Locator,
             0 => Self::Text,
-            _ => return Err(Error::BadItemType),
+            value => return Err(Error::InvalidItemType(value)),
         })
     }
 
