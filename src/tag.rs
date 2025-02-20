@@ -1,8 +1,8 @@
 use crate::{
     error::{Error, Result},
     item::{Item, ItemType},
-    meta::{Meta, MetaPosition, APE_VERSION},
-    util::{probe_id3v1, probe_lyrics3v2, APE_PREAMBLE},
+    meta::{APE_VERSION, Meta, MetaPosition},
+    util::{APE_PREAMBLE, probe_id3v1, probe_lyrics3v2},
 };
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::{
@@ -327,10 +327,10 @@ pub fn remove_from(file: &mut File) -> Result<()> {
 
 #[cfg(test)]
 mod test {
-    use super::{read_from_path, remove_from_path, write_to_path, Error, Result, Tag};
+    use super::{Error, Result, Tag, read_from_path, remove_from_path, write_to_path};
     use crate::item::{Item, ItemType};
     use std::{
-        fs::{remove_file, File},
+        fs::{File, remove_file},
         io::Write,
     };
 

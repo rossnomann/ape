@@ -1,6 +1,6 @@
 use crate::{
     error::{Error, Result},
-    util::{probe_ape, probe_id3v1, probe_lyrics3v2, ID3V1_OFFSET},
+    util::{ID3V1_OFFSET, probe_ape, probe_id3v1, probe_lyrics3v2},
 };
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{Read, Seek, SeekFrom};

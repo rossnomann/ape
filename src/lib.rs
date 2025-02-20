@@ -57,7 +57,7 @@
 pub use self::{
     error::{Error, Result},
     item::{Item, ItemType},
-    tag::{read_from, read_from_path, remove_from, remove_from_path, write_to, write_to_path, Tag},
+    tag::{Tag, read_from, read_from_path, remove_from, remove_from_path, write_to, write_to_path},
 };
 
 mod error;

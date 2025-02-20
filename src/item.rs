@@ -185,7 +185,7 @@ impl From<Item> for Vec<u8> {
 
 #[cfg(test)]
 mod test {
-    use super::{Item, ItemType, DENIED_KEYS};
+    use super::{DENIED_KEYS, Item, ItemType};
     use byteorder::{LittleEndian, ReadBytesExt};
     use std::io::{Cursor, Read};
 
