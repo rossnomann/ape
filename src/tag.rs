@@ -93,7 +93,7 @@ impl Tag {
     }
 
     /// Returns an iterator over the tag
-    pub fn iter(&self) -> SliceIter<Item> {
+    pub fn iter(&self) -> SliceIter<'_, Item> {
         self.0.iter()
     }
 }
